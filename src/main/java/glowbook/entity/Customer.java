@@ -1,8 +1,5 @@
 package glowbook.entity;
 
-
-   package glowbook.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,6 +35,7 @@ public class Customer {
     private String email;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 
     @Column(name = "created_at", updatable = false)

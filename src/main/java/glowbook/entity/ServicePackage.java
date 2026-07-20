@@ -1,8 +1,5 @@
 package glowbook.entity;
 
-public class ServicePackage {
-package glowbook.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -40,5 +37,6 @@ public class ServicePackage {
     private String packageImage;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 }

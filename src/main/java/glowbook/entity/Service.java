@@ -27,5 +27,6 @@ public class Service {
     private String serviceImage;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 }

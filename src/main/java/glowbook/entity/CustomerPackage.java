@@ -1,7 +1,5 @@
 package glowbook.entity;
 
-package glowbook.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -39,5 +37,6 @@ public class CustomerPackage {
     private LocalDate purchaseDate;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 }

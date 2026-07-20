@@ -28,5 +28,6 @@ public class ServiceOption {
     private Double price;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 }

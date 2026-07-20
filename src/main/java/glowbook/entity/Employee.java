@@ -32,5 +32,6 @@ public class Employee {
     private String email;
 
     @Column(name = "is_active")
+    @Builder.Default
     private Boolean active = true;
 }

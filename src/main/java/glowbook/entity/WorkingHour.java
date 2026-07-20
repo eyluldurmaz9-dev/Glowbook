@@ -1,7 +1,5 @@
 package glowbook.entity;
 
-package glowbook.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -33,5 +31,6 @@ public class WorkingHour {
     private LocalTime endTime;
 
     @Column(name = "is_closed")
+    @Builder.Default
     private Boolean closed = false;
 }

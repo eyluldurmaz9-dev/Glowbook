@@ -1,7 +1,5 @@
 package glowbook.entity;
 
-package glowbook.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
 
