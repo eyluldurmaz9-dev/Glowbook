@@ -1,36 +1,43 @@
 # GlowBook Backend
 
-GlowBook backend Spring Boot ve MySQL tabanli REST API uygulamasidir. Flutter istemcileri JWT access token ve refresh token akisi ile bu API'ye baglanir.
+GlowBook Backend, GlowBook randevu ve salon yonetim sisteminin Spring Boot tabanli REST API uygulamasidir. Flutter Android, iOS ve Web istemcileri JWT access token ve refresh token akisi ile bu API'ye baglanir.
+
+## Proje Tanimi
+
+Backend asagidaki is alanlarini yonetir:
+
+- Authentication, JWT ve refresh token
+- Role based authorization: customer, employee, admin
+- Customer, employee ve admin operasyonlari
+- Service, service option, service category ve package kataloglari
+- Appointment creation, availability, cancel/update ve status akislari
+- Waiting list
+- Notifications
+- Working hours, holidays, scheduler ve reminder altyapisi
+- Production uyumlu environment based configuration
 
 ## Gereksinimler
 
 - Java 25
 - Maven Wrapper
-- MySQL
+- MySQL 8 veya uyumlu MySQL servisi
+- Railway veya Render deployment icin Java destekli runtime
 
-## Lokal Calistirma
+## MySQL Kurulumu
 
-```powershell
-.\mvnw.cmd test
-.\mvnw.cmd verify
+Lokal MySQL icin ornek database:
+
+```sql
+CREATE DATABASE glowbook CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Development profili:
+Kullanici ve yetkileri ortam politikalariniza gore olusturun. Database sifresi repository'ye commit edilmez.
 
-```powershell
-$env:SPRING_PROFILES_ACTIVE='dev'
-$env:DB_URL='jdbc:mysql://localhost:3306/glowbook'
-$env:DB_USERNAME='root'
-$env:DB_PASSWORD=''
-$env:JWT_SECRET='local-only-change-me'
-.\mvnw.cmd spring-boot:run
-```
+## Environment Variables
 
-## Production Environment
+Gercek secret ve credential degerleri commit edilmez. `.env.example` sadece gerekli anahtar isimlerini ve guvenli placeholder degerleri gosterir.
 
-Gercek secret ve credential degerleri commit edilmez. `.env.example` sadece anahtar isimlerini ve placeholder degerleri gosterir.
-
-Zorunlu environment variables:
+Zorunlu production degerleri:
 
 - `SPRING_PROFILES_ACTIVE=prod`
 - `PORT`
@@ -40,20 +47,58 @@ Zorunlu environment variables:
 - `JWT_SECRET`
 - `CORS_ALLOWED_ORIGINS`
 
-Opsiyonel:
+Opsiyonel degerler:
 
 - `JWT_EXPIRATION_SECONDS`
 - `JWT_REFRESH_EXPIRATION_DAYS`
 - `REMINDER_CRON`
-- SMS provider credential anahtarlari, gercek SMS sender eklendiginde platform secret olarak tutulmalidir.
+- SMS provider credential anahtarlari
 
-## Deployment
+Lokal calistirma ornegi:
 
-Railway veya Render uzerinde start command:
+```powershell
+$env:SPRING_PROFILES_ACTIVE='dev'
+$env:DB_URL='jdbc:mysql://localhost:3306/glowbook'
+$env:DB_USERNAME='root'
+$env:DB_PASSWORD='local-password'
+$env:JWT_SECRET='local-development-placeholder'
+.\mvnw.cmd spring-boot:run
+```
+
+## Migration
+
+Projede mevcut configuration JPA tabanli schema yonetimini kullanir. Production ortaminda otomatik schema degisiklikleri yerine kontrollu migration stratejisi onerilir. Flyway/Liquibase eklenmesi gerekiyorsa ayri bir teknik karar ve migration planiyla yapilmalidir.
+
+## Test ve Build Komutlari
+
+Windows:
+
+```powershell
+.\mvnw.cmd test
+.\mvnw.cmd verify
+```
+
+Cross-platform:
 
 ```bash
-java -Dserver.port=$PORT -jar target/glowbook-0.0.1-SNAPSHOT.jar
+./mvnw test
+./mvnw verify
 ```
+
+Production profile smoke testi guvenli test database konfigurasyonu ile calistirilmalidir; gercek production database ile test calistirmayin.
+
+## API Dokumantasyonu
+
+Bu teslim paketinde Swagger/OpenAPI dependency'si projeye eklenmemistir; dependency churn ve release riski yaratmamak icin endpoint referansi controller sozlesmelerinden dokumante edilmistir.
+
+Endpoint listesi: `docs/API_REFERENCE.md`
+
+Public health endpointleri:
+
+- `GET /actuator/health`
+- `GET /health`
+
+## Railway/Render Deployment
 
 Build command:
 
@@ -61,19 +106,19 @@ Build command:
 ./mvnw verify
 ```
 
-Detaylar: `docs/DEPLOYMENT_BACKEND.md`
+Start command:
 
-## Health
+```bash
+java -Dserver.port=$PORT -jar target/glowbook-0.0.1-SNAPSHOT.jar
+```
 
-Public health endpointleri:
+Deployment platformunda environment variables secret olarak tanimlanmalidir. Detayli adimlar `docs/DEPLOYMENT_BACKEND.md` dosyasindadir.
 
-- `GET /actuator/health`
-- `GET /health`
-
-## Guvenlik
+## Guvenlik Notlari
 
 - Production CORS `CORS_ALLOWED_ORIGINS` ile allowlist olarak verilir.
 - JWT secret environment variable ile gelir.
-- Database password commit edilmez.
-- Default dev secret production icin kullanilmaz.
-- Token, password ve SMS credential loglanmamalidir.
+- Database password, SMS credential ve token degerleri commit edilmez.
+- Default dev placeholder degerleri production icin kullanilmaz.
+- Token, password ve kisisel veri loglanmamalidir.
+- Admin, employee ve customer endpointlerinde rol kontrolleri backend tarafinda uygulanmalidir; UI gizleme tek basina guvenlik kabul edilmez.
