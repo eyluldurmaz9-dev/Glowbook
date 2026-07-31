@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GlowBook Booking</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <div class="app-shell">
+        <header>
+            <h1>GlowBook</h1>
+            <p>Your appointment booking portal</p>
+        </header>
+
+        <section class="panel" id="status-panel">
+            <div id="status-message" class="status-message"></div>
+        </section>
+
+        <section class="panel auth-panel">
+            <div class="panel-header">
+                <h2>Customer Access</h2>
+            </div>
+            <div class="auth-actions">
+                <button id="show-login" class="secondary">Login</button>
+                <button id="show-register" class="secondary">Register</button>
+                <button id="guest-booking" class="secondary">Book as Guest</button>
+            </div>
+
+            <div id="auth-forms">
+                <form id="login-form" class="hidden">
+                    <label>
+                        Phone
+                        <input type="text" id="login-phone" placeholder="Phone number" required />
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" id="login-password" placeholder="Password" required />
+                    </label>
+                    <button type="submit">Login</button>
+                </form>
+
+                <form id="register-form" class="hidden">
+                    <label>
+                        First name
+                        <input type="text" id="register-firstname" placeholder="First name" required />
+                    </label>
+                    <label>
+                        Last name
+                        <input type="text" id="register-lastname" placeholder="Last name" required />
+                    </label>
+                    <label>
+                        Phone
+                        <input type="text" id="register-phone" placeholder="Phone number" required />
+                    </label>
+                    <label>
+                        Password
+                        <input type="password" id="register-password" placeholder="Password" required />
+                    </label>
+                    <label>
+                        Email
+                        <input type="email" id="register-email" placeholder="Email (optional)" />
+                    </label>
+                    <button type="submit">Register</button>
+                </form>
+            </div>
+
+            <div id="logged-in-panel" class="hidden">
+                <p>Signed in as <strong id="signed-in-name"></strong></p>
+                <button id="logout-button" class="secondary">Logout</button>
+            </div>
+        </section>
+
+        <section class="panel booking-panel hidden">
+            <div class="panel-header">
+                <h2>Book Appointment</h2>
+            </div>
+            <div class="two-columns">
+                <div class="form-group">
+                    <label>
+                        Service
+                        <select id="service-select">
+                            <option value="">Select service</option>
+                        </select>
+                    </label>
+                    <label>
+                        Option
+                        <select id="option-select" disabled>
+                            <option value="">Select option</option>
+                        </select>
+                    </label>
+                    <label>
+                        Appointment date
+                        <input type="date" id="appointment-date" />
+                    </label>
+                    <button id="load-slots" class="secondary">Load available slots</button>
+                </div>
+                <div class="slot-list" id="slot-list">
+                    <h3>Available Slots</h3>
+                    <div id="slots"></div>
+                </div>
+            </div>
+
+            <div id="customer-info" class="guest-info">
+                <h3>Customer Details</h3>
+                <label>
+                    First name
+                    <input type="text" id="customer-firstname" placeholder="First name" />
+                </label>
+                <label>
+                    Last name
+                    <input type="text" id="customer-lastname" placeholder="Last name" />
+                </label>
+                <label>
+                    Phone
+                    <input type="text" id="customer-phone" placeholder="Phone" />
+                </label>
+            </div>
+
+            <div id="package-section" class="hidden">
+                <h3>Available Packages</h3>
+                <select id="package-select">
+                    <option value="">No package</option>
+                </select>
+            </div>
+
+            <div class="booking-actions">
+                <button id="book-appointment">Book Appointment</button>
+            </div>
+        </section>
+
+        <section class="panel result-panel hidden">
+            <div class="panel-header">
+                <h2>Booking Result</h2>
+            </div>
+            <pre id="result-output" class="result-output"></pre>
+        </section>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

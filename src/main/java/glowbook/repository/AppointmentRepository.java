@@ -34,4 +34,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             Integer customerId,
             LocalDate beforeDate
     );
+
+    List<Appointment> findByAppointmentDateAndStatusInOrderByAppointmentTimeAsc(
+            LocalDate appointmentDate,
+            Collection<AppointmentStatus> statuses
+    );
 }
