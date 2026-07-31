@@ -1,0 +1,27 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main, appmod/java-upgrade-20260721081103]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Test
+        run: ./mvnw test
+
+      - name: Build
+        run: ./mvnw verify

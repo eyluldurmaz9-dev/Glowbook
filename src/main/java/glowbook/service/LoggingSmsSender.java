@@ -11,6 +11,14 @@ public class LoggingSmsSender implements SmsSender {
 
     @Override
     public void sendSms(String phone, String message) {
-        LOGGER.info("SMS queued to {}: {}", phone, message);
+        LOGGER.info("SMS queued to {} with {} characters", maskPhone(phone), message == null ? 0 : message.length());
+    }
+
+    private String maskPhone(String phone) {
+        if (phone == null || phone.length() < 4) {
+            return "****";
+        }
+        String suffix = phone.substring(phone.length() - 4);
+        return "****" + suffix;
     }
 }
