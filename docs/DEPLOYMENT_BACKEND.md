@@ -37,8 +37,6 @@ Windows lokal build:
 | `MYSQLUSER` | Railway icin evet | Railway MySQL kullanicisi. |
 | `MYSQLPASSWORD` | Railway icin evet | Railway MySQL sifresi, secret olarak tutulur. |
 | `DB_URL` | Hayir | Verilirse `MYSQL*` degerlerinden uretilen JDBC URL yerine kullanilir. |
-| `DB_USERNAME` | Hayir | Verilirse `MYSQLUSER` yerine kullanilir. |
-| `DB_PASSWORD` | Hayir | Verilirse `MYSQLPASSWORD` yerine kullanilir. |
 | `JWT_SECRET` | Evet | Uzun, rastgele secret. |
 | `CORS_ALLOWED_ORIGINS` | Evet | Virgulle ayrilmis Flutter Web domain allowlist. |
 | `HIBERNATE_DDL_AUTO` | Hayir | Varsayilan `update`; schema hazirsa `validate` yapilabilir. |
@@ -64,7 +62,9 @@ Railway attached MySQL ile ek `DB_URL` yazmak zorunlu degildir. Uygulama su form
 jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 ```
 
-Manuel override gerekiyorsa `DB_URL`, `DB_USERNAME` ve `DB_PASSWORD` backend service variables olarak eklenebilir.
+Manuel JDBC URL override gerekiyorsa yalnizca `DB_URL` backend service variable olarak eklenebilir.
+
+Railway Variables alaninda elle eklenmis `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` veya `SPRING_DATASOURCE_URL` varsa bunlari silmek en temiz yoldur. Uygulama Railway'in `MYSQL*` degiskenlerinden datasource'u kurar. Yanlis yazilmis `SPRING_DATASOURCE_USERNAME` degeri MySQL'de `Access denied for user '}root'` hatasina yol acar.
 
 ## Render
 
