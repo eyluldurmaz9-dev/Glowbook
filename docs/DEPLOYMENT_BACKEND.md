@@ -37,6 +37,8 @@ Windows lokal build:
 | `MYSQLUSER` | Railway icin evet | Railway MySQL kullanicisi. |
 | `MYSQLPASSWORD` | Railway icin evet | Railway MySQL sifresi, secret olarak tutulur. |
 | `DB_URL` | Hayir | Verilirse `MYSQL*` degerlerinden uretilen JDBC URL yerine kullanilir. |
+| `DB_USERNAME` | Hayir | Verilirse `MYSQLUSER` yerine kullanilir. |
+| `DB_PASSWORD` | Hayir | Verilirse `MYSQLPASSWORD` yerine kullanilir. |
 | `JWT_SECRET` | Evet | Uzun, rastgele secret. |
 | `CORS_ALLOWED_ORIGINS` | Evet | Virgulle ayrilmis Flutter Web domain allowlist. |
 | `HIBERNATE_DDL_AUTO` | Hayir | Varsayilan `update`; schema hazirsa `validate` yapilabilir. |
@@ -50,7 +52,7 @@ Windows lokal build:
 ## Railway
 
 1. Repository'yi Railway projesine baglayin.
-2. Java 25 destekli build image kullandiginizi dogrulayin.
+2. Java 21 destekli build image kullandiginizi dogrulayin.
 3. Railway MySQL servisini backend servisine attach edin; Railway `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD` ve `MYSQL_URL` degiskenlerini saglar.
 4. Backend servisine `SPRING_PROFILES_ACTIVE=prod`, `JWT_SECRET` ve `CORS_ALLOWED_ORIGINS` ekleyin.
 5. Build command olarak `./mvnw verify` kullanin.
@@ -62,7 +64,7 @@ Railway attached MySQL ile ek `DB_URL` yazmak zorunlu degildir. Uygulama su form
 jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
 ```
 
-Manuel JDBC URL override gerekiyorsa yalnizca `DB_URL` backend service variable olarak eklenebilir.
+Manuel override gerekiyorsa `DB_URL`, `DB_USERNAME` ve `DB_PASSWORD` backend service variables olarak eklenebilir.
 
 Railway Variables alaninda elle eklenmis `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` veya `SPRING_DATASOURCE_URL` varsa bunlari silmek en temiz yoldur. Uygulama Railway'in `MYSQL*` degiskenlerinden datasource'u kurar. Yanlis yazilmis `SPRING_DATASOURCE_USERNAME` degeri MySQL'de `Access denied for user '}root'` hatasina yol acar.
 
@@ -78,7 +80,7 @@ Railway Variables alaninda elle eklenmis `SPRING_DATASOURCE_USERNAME`, `SPRING_D
 Production'da wildcard origin kullanilmaz. Ornek:
 
 ```text
-CORS_ALLOWED_ORIGINS=https://glowbook.example.com,https://glowbook.vercel.app
+CORS_ALLOWED_ORIGINS=https://glowbook-flutter.vercel.app,https://glowbook.example.com
 ```
 
 ## Health Check

@@ -47,7 +47,7 @@ Zorunlu production degerleri:
 
 Opsiyonel degerler:
 
-- `DB_URL` override degeri
+- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` override degerleri
 - `HIBERNATE_DDL_AUTO` (`update` varsayilan Railway production degeridir)
 - `JWT_EXPIRATION_SECONDS`
 - `JWT_REFRESH_EXPIRATION_DAYS`
@@ -114,7 +114,7 @@ java -Dserver.port=$PORT -jar target/glowbook-0.0.1-SNAPSHOT.jar
 
 Deployment platformunda environment variables secret olarak tanimlanmalidir. Detayli adimlar `docs/DEPLOYMENT_BACKEND.md` dosyasindadir.
 
-Railway MySQL attached ise uygulama `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER` ve `MYSQLPASSWORD` degiskenlerinden JDBC URL olusturur. Sadece gerekiyorsa `DB_URL` JDBC URL override olarak verilebilir. Frontend erisimi icin `CORS_ALLOWED_ORIGINS` degeri Vercel production domainini icermelidir.
+Railway MySQL attached ise uygulama `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER` ve `MYSQLPASSWORD` degiskenlerinden JDBC URL olusturur. `DB_URL`, `DB_USERNAME` veya `DB_PASSWORD` verilirse bu degerler Railway varsayilanlarini override eder. Frontend erisimi icin `CORS_ALLOWED_ORIGINS` degeri Vercel production domainini icermelidir.
 
 Railway backend servisinde elle eklenmis `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD` veya `SPRING_DATASOURCE_URL` varsa silin. GlowBook Railway'in MySQL plugin degiskenlerini kullanir; yanlis yazilmis bir datasource username degeri `Access denied for user '}root'` hatasiyla backend'i dusurur.
 

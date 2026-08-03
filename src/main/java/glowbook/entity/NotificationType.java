@@ -1,0 +1,10 @@
+package glowbook.entity;
+
+public enum NotificationType {
+
+    APPOINTMENT_CREATED,
+    APPOINTMENT_APPROVED,
+    APPOINTMENT_CANCELLED,
+    APPOINTMENT_REMINDER,
+    WAITING_LIST_MATCH
+}
