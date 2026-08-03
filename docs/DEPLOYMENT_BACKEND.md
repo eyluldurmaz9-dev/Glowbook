@@ -80,7 +80,7 @@ Railway Variables alaninda elle eklenmis `SPRING_DATASOURCE_USERNAME`, `SPRING_D
 Production'da wildcard origin kullanilmaz. Ornek:
 
 ```text
-CORS_ALLOWED_ORIGINS=https://glowbook-flutter.vercel.app,https://glowbook.example.com
+CORS_ALLOWED_ORIGINS=https://*.vercel.app,https://glowbook.example.com
 ```
 
 ## Health Check

@@ -63,7 +63,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(parseAllowedOrigins());
+        configuration.setAllowedOriginPatterns(parseAllowedOrigins());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
         configuration.setExposedHeaders(List.of("Location"));
@@ -77,7 +77,7 @@ public class SecurityConfig {
 
     private List<String> parseAllowedOrigins() {
         if (allowedOrigins == null || allowedOrigins.isBlank()) {
-            return List.of();
+            return List.of("https://*.vercel.app");
         }
         return Arrays.stream(allowedOrigins.split(","))
                 .map(String::trim)
