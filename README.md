@@ -41,14 +41,14 @@ Zorunlu production degerleri:
 
 - `SPRING_PROFILES_ACTIVE=prod`
 - `PORT`
-- `DB_URL`
-- `DB_USERNAME`
-- `DB_PASSWORD`
+- Railway MySQL variables: `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD`
 - `JWT_SECRET`
 - `CORS_ALLOWED_ORIGINS`
 
 Opsiyonel degerler:
 
+- `DB_URL`, `DB_USERNAME`, `DB_PASSWORD` override degerleri
+- `HIBERNATE_DDL_AUTO` (`update` varsayilan Railway production degeridir)
 - `JWT_EXPIRATION_SECONDS`
 - `JWT_REFRESH_EXPIRATION_DAYS`
 - `REMINDER_CRON`
@@ -113,6 +113,8 @@ java -Dserver.port=$PORT -jar target/glowbook-0.0.1-SNAPSHOT.jar
 ```
 
 Deployment platformunda environment variables secret olarak tanimlanmalidir. Detayli adimlar `docs/DEPLOYMENT_BACKEND.md` dosyasindadir.
+
+Railway MySQL attached ise uygulama `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER` ve `MYSQLPASSWORD` degiskenlerinden JDBC URL olusturur. `DB_URL`, `DB_USERNAME` veya `DB_PASSWORD` verilirse bu degerler Railway varsayilanlarini override eder. Frontend erisimi icin `CORS_ALLOWED_ORIGINS` degeri Vercel production domainini icermelidir.
 
 ## Guvenlik Notlari
 

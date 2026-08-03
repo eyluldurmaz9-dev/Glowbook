@@ -30,12 +30,18 @@ Windows lokal build:
 | Key | Zorunlu | Not |
 | --- | --- | --- |
 | `SPRING_PROFILES_ACTIVE` | Evet | Production icin `prod`. |
-| `PORT` | Evet | Railway/Render tarafindan verilir. |
-| `DB_URL` | Evet | MySQL JDBC URL. |
-| `DB_USERNAME` | Evet | MySQL kullanicisi. |
-| `DB_PASSWORD` | Evet | MySQL sifresi, secret olarak tutulur. |
+| `PORT` | Evet | Railway tarafindan verilir; uygulama `server.port=${PORT:8080}` ile dinler. |
+| `MYSQLHOST` | Railway icin evet | Railway MySQL host degeri. |
+| `MYSQLPORT` | Railway icin evet | Railway MySQL port degeri. |
+| `MYSQLDATABASE` | Railway icin evet | Railway MySQL database adi. |
+| `MYSQLUSER` | Railway icin evet | Railway MySQL kullanicisi. |
+| `MYSQLPASSWORD` | Railway icin evet | Railway MySQL sifresi, secret olarak tutulur. |
+| `DB_URL` | Hayir | Verilirse `MYSQL*` degerlerinden uretilen JDBC URL yerine kullanilir. |
+| `DB_USERNAME` | Hayir | Verilirse `MYSQLUSER` yerine kullanilir. |
+| `DB_PASSWORD` | Hayir | Verilirse `MYSQLPASSWORD` yerine kullanilir. |
 | `JWT_SECRET` | Evet | Uzun, rastgele secret. |
 | `CORS_ALLOWED_ORIGINS` | Evet | Virgulle ayrilmis Flutter Web domain allowlist. |
+| `HIBERNATE_DDL_AUTO` | Hayir | Varsayilan `update`; schema hazirsa `validate` yapilabilir. |
 | `JWT_EXPIRATION_SECONDS` | Hayir | Varsayilan prod degeri 900. |
 | `JWT_REFRESH_EXPIRATION_DAYS` | Hayir | Varsayilan 30. |
 | `REMINDER_CRON` | Hayir | Scheduler cron degeri. |
@@ -47,9 +53,18 @@ Windows lokal build:
 
 1. Repository'yi Railway projesine baglayin.
 2. Java 25 destekli build image kullandiginizi dogrulayin.
-3. Environment variables listesini Railway Variables alanina ekleyin.
-4. Build command olarak `./mvnw verify` kullanin.
-5. Start command olarak `java -Dserver.port=$PORT -jar target/glowbook-0.0.1-SNAPSHOT.jar` kullanin.
+3. Railway MySQL servisini backend servisine attach edin; Railway `MYSQLHOST`, `MYSQLPORT`, `MYSQLDATABASE`, `MYSQLUSER`, `MYSQLPASSWORD` ve `MYSQL_URL` degiskenlerini saglar.
+4. Backend servisine `SPRING_PROFILES_ACTIVE=prod`, `JWT_SECRET` ve `CORS_ALLOWED_ORIGINS` ekleyin.
+5. Build command olarak `./mvnw verify` kullanin.
+6. Start command olarak `java -Dserver.port=$PORT -jar target/glowbook-0.0.1-SNAPSHOT.jar` kullanin.
+
+Railway attached MySQL ile ek `DB_URL` yazmak zorunlu degildir. Uygulama su formda JDBC URL olusturur:
+
+```text
+jdbc:mysql://${MYSQLHOST}:${MYSQLPORT}/${MYSQLDATABASE}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+```
+
+Manuel override gerekiyorsa `DB_URL`, `DB_USERNAME` ve `DB_PASSWORD` backend service variables olarak eklenebilir.
 
 ## Render
 
@@ -87,7 +102,7 @@ veya
 - Flyway/Liquibase dependency ekleyip migrationlari uygulama startup zincirine baglamak.
 - Veritabani migrationlarini CI/CD veya database release adiminda manuel ve versioned olarak uygulamak.
 
-Prod profil `spring.jpa.hibernate.ddl-auto=validate` kullandigi icin schema uygulama baslamadan once hazir olmalidir.
+Prod profil `spring.jpa.hibernate.ddl-auto=${HIBERNATE_DDL_AUTO:update}` kullanir. Railway MySQL yeni ve bos geldiginde uygulamanin ayakta kalmasi icin varsayilan `update` degeridir. Schema tamamen yonetilen hale geldiginde `HIBERNATE_DDL_AUTO=validate` yapilip migration adimi CI/CD surecine alinabilir.
 
 ## Logging ve SMS
 
