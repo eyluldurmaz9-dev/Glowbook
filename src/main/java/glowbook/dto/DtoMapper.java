@@ -70,6 +70,8 @@ public final class DtoMapper {
                 customerPackage.getCustomer().getCustomerId(),
                 customerPackage.getServicePackage().getPackageId(),
                 customerPackage.getServicePackage().getPackageName(),
+                customerPackage.getServicePackage().getService().getServiceName(),
+                customerPackage.getServicePackage().getTotalSession(),
                 customerPackage.getRemainingSession(),
                 customerPackage.getPurchasePrice(),
                 customerPackage.getPurchaseDate(),

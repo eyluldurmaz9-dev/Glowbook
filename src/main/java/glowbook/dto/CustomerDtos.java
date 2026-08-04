@@ -36,6 +36,8 @@ public final class CustomerDtos {
             Integer customerId,
             Integer packageId,
             String packageName,
+            String serviceName,
+            Integer totalSession,
             Integer remainingSession,
             Double purchasePrice,
             LocalDate purchaseDate,

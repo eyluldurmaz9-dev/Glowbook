@@ -53,6 +53,7 @@ public class CatalogSeedConfig {
         createOption(skinCare, "Leke Bakimi", 1650.0);
         createOption(skinCare, "Akne Bakimi", 1400.0);
         createPackage(skinCare, "Glow Cilt Paketi", "4 seanslik yenileyici cilt bakimi paketi.", 4, 5200.0);
+        createPackage(skinCare, "Hydrafacial Bakim Paketi", "5 seanslik nem ve parlaklik bakim paketi.", 5, 6500.0);
 
         glowbook.entity.Service laser = createService(
                 "Lazer Epilasyon",
@@ -64,7 +65,9 @@ public class CatalogSeedConfig {
         createOption(laser, "5 Bolge", 1650.0);
         createOption(laser, "Yuz Bolgesi", 650.0);
         createOption(laser, "Tum Vucut", 2200.0);
-        createPackage(laser, "Lazer Devam Paketi", "6 seanslik avantajli lazer epilasyon paketi.", 6, 11500.0);
+        createPackage(laser, "5 Bolge Lazer Paketi", "10 seanslik 5 bolge lazer epilasyon paketi.", 10, 1500.0);
+        createPackage(laser, "Tum Vucut Lazer Paketi", "8 seanslik tum vucut lazer epilasyon programi.", 8, 11500.0);
+        createPackage(laser, "Yuz Bolgesi Lazer Paketi", "6 seanslik yuz bolgesi lazer epilasyon paketi.", 6, 3200.0);
 
         glowbook.entity.Service massage = createService(
                 "Masaj ve Spa",
@@ -84,6 +87,7 @@ public class CatalogSeedConfig {
         createOption(brow, "Kas Tasarimi", 650.0);
         createOption(brow, "Kas Laminasyonu", 900.0);
         createOption(brow, "Kirpik Lifting", 950.0);
+        createPackage(brow, "Kas Kirpik Bakim Paketi", "4 seanslik kas ve kirpik bakim paketi.", 4, 2600.0);
 
         glowbook.entity.Service slimming = createService(
                 "Bolgesel Incelme",
@@ -95,6 +99,7 @@ public class CatalogSeedConfig {
         createOption(slimming, "Kol Bolgesi", 1250.0);
         createOption(slimming, "Selulit Bakimi", 1650.0);
         createPackage(slimming, "Incelme Programi", "6 seanslik bolgesel incelme programi.", 6, 7800.0);
+        createPackage(slimming, "Sikilasma Paketi", "8 seanslik bolgesel sikilasma ve selulit bakimi.", 8, 9800.0);
 
         Employee admin = createEmployee("ADMIN", "GlowBook", "Admin", "admin123", "05550000000", "admin@glowbook.com");
         Employee skinExpert = createEmployee("GLW001", "Defne", "Yilmaz", "123456", "05551110001", "defne@glowbook.com");
@@ -143,10 +148,17 @@ public class CatalogSeedConfig {
     }
 
     private void createPackage(glowbook.entity.Service service, String name, String description, Integer sessions, Double price) {
-        boolean exists = servicePackageRepository.findByServiceServiceIdAndActiveTrueOrderByPackageNameAsc(service.getServiceId())
+        var existing = servicePackageRepository.findByServiceServiceIdAndActiveTrueOrderByPackageNameAsc(service.getServiceId())
                 .stream()
-                .anyMatch(servicePackage -> name.equalsIgnoreCase(servicePackage.getPackageName()));
-        if (exists) {
+                .filter(servicePackage -> name.equalsIgnoreCase(servicePackage.getPackageName()))
+                .findFirst();
+        if (existing.isPresent()) {
+            ServicePackage servicePackage = existing.get();
+            servicePackage.setDescription(description);
+            servicePackage.setTotalSession(sessions);
+            servicePackage.setPrice(price);
+            servicePackage.setActive(true);
+            servicePackageRepository.save(servicePackage);
             return;
         }
         servicePackageRepository.save(ServicePackage.builder()
@@ -167,9 +179,7 @@ public class CatalogSeedConfig {
                     employee.setPhone(phone);
                     employee.setEmail(email);
                     employee.setActive(true);
-                    if (employee.getPassword() == null || employee.getPassword().isBlank()) {
-                        employee.setPassword(passwordEncoder.encode(password));
-                    }
+                    employee.setPassword(passwordEncoder.encode(password));
                     return employeeRepository.save(employee);
                 })
                 .orElseGet(() -> employeeRepository.save(Employee.builder()
