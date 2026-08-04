@@ -7,7 +7,10 @@ import glowbook.entity.NotificationType;
 import glowbook.exception.ResourceNotFoundException;
 import glowbook.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -17,6 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class NotificationService {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotificationService.class);
 
     private final NotificationRepository notificationRepository;
     private final SmsSender smsSender;
@@ -53,12 +58,34 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Notification createAndSendSms(Customer customer, Appointment appointment, NotificationType type, String title, String message, String phone) {
         Notification notification = create(customer, appointment, type, title, message);
-        smsSender.sendSms(phone, message);
-        notification.setSmsSent(true);
+        try {
+            smsSender.sendSms(phone, message);
+            notification.setSmsSent(true);
+        } catch (RuntimeException exception) {
+            LOGGER.warn("SMS could not be sent for appointment {}: {}", appointment == null ? null : appointment.getAppointmentId(), exception.getMessage());
+            notification.setSmsSent(false);
+        }
         return notificationRepository.save(notification);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createAndSendSmsSafely(Customer customer, Appointment appointment, NotificationType type, String title, String message, String phone) {
+        try {
+            Notification notification = create(customer, appointment, type, title, message);
+            try {
+                smsSender.sendSms(phone, message);
+                notification.setSmsSent(true);
+            } catch (RuntimeException exception) {
+                LOGGER.warn("SMS could not be sent for appointment {}: {}", appointment == null ? null : appointment.getAppointmentId(), exception.getMessage());
+                notification.setSmsSent(false);
+            }
+            notificationRepository.save(notification);
+        } catch (RuntimeException exception) {
+            LOGGER.warn("Notification could not be saved for appointment {}: {}", appointment == null ? null : appointment.getAppointmentId(), exception.getMessage());
+        }
     }
 
     @Transactional

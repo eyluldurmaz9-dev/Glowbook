@@ -98,7 +98,7 @@ public class AppointmentService {
         }
 
         Appointment appointment = appointmentRepository.save(request);
-        notificationService.createAndSendSms(
+        notificationService.createAndSendSmsSafely(
                 appointment.getCustomer(),
                 appointment,
                 NotificationType.APPOINTMENT_CREATED,
@@ -115,7 +115,7 @@ public class AppointmentService {
         ensureNotCancelled(appointment);
         appointment.setStatus(AppointmentStatus.APPROVED);
         Appointment savedAppointment = appointmentRepository.save(appointment);
-        notificationService.createAndSendSms(
+        notificationService.createAndSendSmsSafely(
                 savedAppointment.getCustomer(),
                 savedAppointment,
                 NotificationType.APPOINTMENT_APPROVED,
@@ -150,7 +150,7 @@ public class AppointmentService {
         appointment.setCancellationReason(cancellationReason);
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
-        notificationService.createAndSendSms(
+        notificationService.createAndSendSmsSafely(
                 savedAppointment.getCustomer(),
                 savedAppointment,
                 NotificationType.APPOINTMENT_CANCELLED,

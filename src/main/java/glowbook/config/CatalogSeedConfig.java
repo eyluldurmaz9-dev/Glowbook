@@ -1,10 +1,12 @@
 package glowbook.config;
 
+import glowbook.entity.Customer;
 import glowbook.entity.Employee;
 import glowbook.entity.EmployeeService;
 import glowbook.entity.ServiceOption;
 import glowbook.entity.ServicePackage;
 import glowbook.entity.WorkingHour;
+import glowbook.repository.CustomerRepository;
 import glowbook.repository.EmployeeRepository;
 import glowbook.repository.EmployeeServiceRepository;
 import glowbook.repository.ServiceOptionRepository;
@@ -30,6 +32,7 @@ public class CatalogSeedConfig {
     private final ServiceRepository serviceRepository;
     private final ServiceOptionRepository serviceOptionRepository;
     private final ServicePackageRepository servicePackageRepository;
+    private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeServiceRepository employeeServiceRepository;
     private final WorkingHourRepository workingHourRepository;
@@ -105,6 +108,8 @@ public class CatalogSeedConfig {
         Employee skinExpert = createEmployee("GLW001", "Defne", "Yilmaz", "123456", "05551110001", "defne@glowbook.com");
         Employee laserExpert = createEmployee("GLW002", "Mina", "Kaya", "123456", "05551110002", "mina@glowbook.com");
         Employee spaExpert = createEmployee("GLW003", "Selin", "Aydin", "123456", "05551110003", "selin@glowbook.com");
+        createCustomer("GlowBook", "Admin", "05550000009", "admin123", "admin@glowbook.com");
+        createCustomer("GlowBook", "Uye", "05550000010", "uye12345", "uye@glowbook.com");
 
         assignAll(admin, List.of(skinCare, laser, massage, brow, slimming));
         assignAll(skinExpert, List.of(skinCare, brow, slimming));
@@ -188,6 +193,28 @@ public class CatalogSeedConfig {
                         .lastName(lastName)
                         .password(passwordEncoder.encode(password))
                         .phone(phone)
+                        .email(email)
+                        .active(true)
+                        .build()));
+    }
+
+    private Customer createCustomer(String firstName, String lastName, String phone, String password, String email) {
+        return customerRepository.findByPhone(phone)
+                .or(() -> customerRepository.findByEmail(email))
+                .map(customer -> {
+                    customer.setFirstName(firstName);
+                    customer.setLastName(lastName);
+                    customer.setPhone(phone);
+                    customer.setPassword(passwordEncoder.encode(password));
+                    customer.setEmail(email);
+                    customer.setActive(true);
+                    return customerRepository.save(customer);
+                })
+                .orElseGet(() -> customerRepository.save(Customer.builder()
+                        .firstName(firstName)
+                        .lastName(lastName)
+                        .phone(phone)
+                        .password(passwordEncoder.encode(password))
                         .email(email)
                         .active(true)
                         .build()));

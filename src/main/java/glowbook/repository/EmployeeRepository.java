@@ -10,5 +10,7 @@ public interface EmployeeRepository extends JpaRepository<Employee, String> {
 
     Optional<Employee> findByEmployeeIdAndActiveTrue(String employeeId);
 
+    Optional<Employee> findByEmailAndActiveTrue(String email);
+
     List<Employee> findByActiveTrueOrderByFirstNameAscLastNameAsc();
 }

@@ -61,6 +61,7 @@ public class AuthService {
 
     private AuthDtos.AuthResponse loginCustomer(AuthDtos.LoginRequest request) {
         Customer customer = customerRepository.findByPhone(request.username())
+                .or(() -> customerRepository.findByEmail(request.username()))
                 .orElseThrow(() -> new BusinessException("Invalid phone or password"));
 
         if (!Boolean.TRUE.equals(customer.getActive()) || !passwordMatches(request.password(), customer.getPassword())) {
@@ -82,6 +83,7 @@ public class AuthService {
 
     private AuthDtos.AuthResponse loginEmployee(AuthDtos.LoginRequest request, UserRole requestedRole) {
         Employee employee = employeeRepository.findByEmployeeIdAndActiveTrue(request.username())
+                .or(() -> employeeRepository.findByEmailAndActiveTrue(request.username()))
                 .orElseThrow(() -> new BusinessException("Invalid employee id or password"));
 
         if (!passwordMatches(request.password(), employee.getPassword())) {
