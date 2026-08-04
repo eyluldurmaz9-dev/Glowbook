@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -48,6 +49,9 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
                         .requestMatchers("/actuator/health", "/health").permitAll()
                         .requestMatchers("/api/auth/**", "/api/catalog/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/appointments/available-slots").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/employees").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/admin/employees/services/**").permitAll()
                         .requestMatchers("/api/appointments", "/api/waiting-list").permitAll()
                         .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "EMPLOYEE")
                         .anyRequest().authenticated()
