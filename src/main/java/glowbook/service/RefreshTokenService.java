@@ -7,6 +7,7 @@ import glowbook.security.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -24,7 +25,7 @@ public class RefreshTokenService {
     @Value("${app.jwt.refresh-expiration-days:30}")
     private long refreshExpirationDays;
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public RefreshToken create(String subject, UserRole role) {
         String token = UUID.randomUUID().toString() + "." + UUID.randomUUID().toString();
         Instant expiresAt = Instant.now().plus(refreshExpirationDays, ChronoUnit.DAYS);

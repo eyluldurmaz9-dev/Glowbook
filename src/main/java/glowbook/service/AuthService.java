@@ -38,7 +38,7 @@ public class AuthService {
 
         Customer savedCustomer = customerService.create(customer);
         String token = jwtTokenService.generateToken(String.valueOf(savedCustomer.getCustomerId()), UserRole.CUSTOMER);
-        String refresh = refreshTokenService.create(String.valueOf(savedCustomer.getCustomerId()), UserRole.CUSTOMER).getToken();
+        String refresh = createRefreshTokenOrNull(String.valueOf(savedCustomer.getCustomerId()), UserRole.CUSTOMER);
 
         return new AuthDtos.AuthResponse(
             token,
@@ -68,7 +68,7 @@ public class AuthService {
         }
 
         String token = jwtTokenService.generateToken(String.valueOf(customer.getCustomerId()), UserRole.CUSTOMER);
-        String refresh = refreshTokenService.create(String.valueOf(customer.getCustomerId()), UserRole.CUSTOMER).getToken();
+        String refresh = createRefreshTokenOrNull(String.valueOf(customer.getCustomerId()), UserRole.CUSTOMER);
         return new AuthDtos.AuthResponse(
             token,
             refresh,
@@ -94,7 +94,7 @@ public class AuthService {
         }
         UserRole tokenRole = adminEmployee ? UserRole.ADMIN : UserRole.EMPLOYEE;
         String token = jwtTokenService.generateToken(employee.getEmployeeId(), tokenRole);
-        String refresh = refreshTokenService.create(employee.getEmployeeId(), tokenRole).getToken();
+        String refresh = createRefreshTokenOrNull(employee.getEmployeeId(), tokenRole);
 
         return new AuthDtos.AuthResponse(
                 token,
@@ -140,5 +140,13 @@ public class AuthService {
 
     private boolean passwordMatches(String rawPassword, String storedPassword) {
         return passwordEncoder.matches(rawPassword, storedPassword);
+    }
+
+    private String createRefreshTokenOrNull(String subject, UserRole role) {
+        try {
+            return refreshTokenService.create(subject, role).getToken();
+        } catch (RuntimeException exception) {
+            return null;
+        }
     }
 }
