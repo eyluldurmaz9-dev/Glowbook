@@ -2,6 +2,7 @@ package glowbook.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import glowbook.security.UserRole;
 
 @Entity
 @Table(name = "employees")
@@ -34,4 +35,9 @@ public class Employee {
     @Column(name = "is_active")
     @Builder.Default
     private Boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private UserRole role = UserRole.EMPLOYEE;
 }

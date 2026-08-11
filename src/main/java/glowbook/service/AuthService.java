@@ -52,7 +52,12 @@ public class AuthService {
     }
 
     public AuthDtos.AuthResponse login(AuthDtos.LoginRequest request) {
-        UserRole role = UserRole.valueOf(request.role().toUpperCase());
+        UserRole role;
+        try {
+            role = UserRole.valueOf(request.role().toUpperCase());
+        } catch (IllegalArgumentException exception) {
+            throw new BusinessException("Invalid role");
+        }
         return switch (role) {
             case CUSTOMER -> loginCustomer(request);
             case EMPLOYEE, ADMIN -> loginEmployee(request, role);
@@ -90,7 +95,7 @@ public class AuthService {
             throw new BusinessException("Invalid employee id or password");
         }
 
-        boolean adminEmployee = "ADMIN".equalsIgnoreCase(employee.getEmployeeId());
+        boolean adminEmployee = employee.getRole() == UserRole.ADMIN;
         if (requestedRole == UserRole.ADMIN && !adminEmployee) {
             throw new BusinessException("Invalid employee id or password");
         }

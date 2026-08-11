@@ -1,12 +1,10 @@
 package glowbook.config;
 
-import glowbook.entity.Customer;
 import glowbook.entity.Employee;
 import glowbook.entity.EmployeeService;
 import glowbook.entity.ServiceOption;
 import glowbook.entity.ServicePackage;
 import glowbook.entity.WorkingHour;
-import glowbook.repository.CustomerRepository;
 import glowbook.repository.EmployeeRepository;
 import glowbook.repository.EmployeeServiceRepository;
 import glowbook.repository.ServiceOptionRepository;
@@ -19,11 +17,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.core.annotation.Order;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
+import glowbook.security.UserRole;
 
 @Configuration
 @RequiredArgsConstructor
@@ -32,13 +33,13 @@ public class CatalogSeedConfig {
     private final ServiceRepository serviceRepository;
     private final ServiceOptionRepository serviceOptionRepository;
     private final ServicePackageRepository servicePackageRepository;
-    private final CustomerRepository customerRepository;
     private final EmployeeRepository employeeRepository;
     private final EmployeeServiceRepository employeeServiceRepository;
     private final WorkingHourRepository workingHourRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Bean
+    @Order(0)
     ApplicationRunner seedCatalog() {
         return args -> seedCatalogData();
     }
@@ -104,12 +105,10 @@ public class CatalogSeedConfig {
         createPackage(slimming, "Incelme Programi", "6 seanslik bolgesel incelme programi.", 6, 7800.0);
         createPackage(slimming, "Sikilasma Paketi", "8 seanslik bolgesel sikilasma ve selulit bakimi.", 8, 9800.0);
 
-        Employee admin = createEmployee("ADMIN", "GlowBook", "Admin", "admin123", "05550000000", "admin@glowbook.com");
-        Employee skinExpert = createEmployee("GLW001", "Defne", "Yilmaz", "123456", "05551110001", "defne@glowbook.com");
-        Employee laserExpert = createEmployee("GLW002", "Mina", "Kaya", "123456", "05551110002", "mina@glowbook.com");
-        Employee spaExpert = createEmployee("GLW003", "Selin", "Aydin", "123456", "05551110003", "selin@glowbook.com");
-        createCustomer("GlowBook", "Admin", "05550000009", "admin123", "admin@glowbook.com");
-        createCustomer("GlowBook", "Uye", "05550000010", "uye12345", "uye@glowbook.com");
+        Employee admin = createEmployee("ADMIN", "GlowBook", "Admin", "05550000000", "admin@glowbook.com", UserRole.ADMIN);
+        Employee skinExpert = createEmployee("GLW001", "Defne", "Yilmaz", "05551110001", "defne@glowbook.com", UserRole.EMPLOYEE);
+        Employee laserExpert = createEmployee("GLW002", "Mina", "Kaya", "05551110002", "mina@glowbook.com", UserRole.EMPLOYEE);
+        Employee spaExpert = createEmployee("GLW003", "Selin", "Aydin", "05551110003", "selin@glowbook.com", UserRole.EMPLOYEE);
 
         assignAll(admin, List.of(skinCare, laser, massage, brow, slimming));
         assignAll(skinExpert, List.of(skinCare, brow, slimming));
@@ -176,7 +175,7 @@ public class CatalogSeedConfig {
                 .build());
     }
 
-    private Employee createEmployee(String id, String firstName, String lastName, String password, String phone, String email) {
+    private Employee createEmployee(String id, String firstName, String lastName, String phone, String email, UserRole role) {
         return employeeRepository.findById(id)
                 .map(employee -> {
                     employee.setFirstName(firstName);
@@ -184,39 +183,18 @@ public class CatalogSeedConfig {
                     employee.setPhone(phone);
                     employee.setEmail(email);
                     employee.setActive(true);
-                    employee.setPassword(passwordEncoder.encode(password));
+                    employee.setRole(role);
                     return employeeRepository.save(employee);
                 })
                 .orElseGet(() -> employeeRepository.save(Employee.builder()
                         .employeeId(id)
                         .firstName(firstName)
                         .lastName(lastName)
-                        .password(passwordEncoder.encode(password))
+                        .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                         .phone(phone)
                         .email(email)
                         .active(true)
-                        .build()));
-    }
-
-    private Customer createCustomer(String firstName, String lastName, String phone, String password, String email) {
-        return customerRepository.findByPhone(phone)
-                .or(() -> customerRepository.findByEmail(email))
-                .map(customer -> {
-                    customer.setFirstName(firstName);
-                    customer.setLastName(lastName);
-                    customer.setPhone(phone);
-                    customer.setPassword(passwordEncoder.encode(password));
-                    customer.setEmail(email);
-                    customer.setActive(true);
-                    return customerRepository.save(customer);
-                })
-                .orElseGet(() -> customerRepository.save(Customer.builder()
-                        .firstName(firstName)
-                        .lastName(lastName)
-                        .phone(phone)
-                        .password(passwordEncoder.encode(password))
-                        .email(email)
-                        .active(true)
+                        .role(role)
                         .build()));
     }
 
