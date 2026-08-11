@@ -33,6 +33,10 @@ public class ServicePackage {
     @Column(nullable = false)
     private Double price;
 
+    @Column(name = "validity_days")
+    @Builder.Default
+    private Integer validityDays = 365;
+
     @Column(name = "package_image")
     private String packageImage;
 
@@ -40,4 +44,3 @@ public class ServicePackage {
     @Builder.Default
     private Boolean active = true;
 }
- 

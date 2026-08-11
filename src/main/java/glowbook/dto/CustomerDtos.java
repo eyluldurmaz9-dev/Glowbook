@@ -41,6 +41,7 @@ public final class CustomerDtos {
             Integer remainingSession,
             Double purchasePrice,
             LocalDate purchaseDate,
+            LocalDate validUntil,
             Boolean active
     ) {
     }

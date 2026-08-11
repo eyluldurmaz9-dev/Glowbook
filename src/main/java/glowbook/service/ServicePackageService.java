@@ -49,6 +49,7 @@ public class ServicePackageService {
         servicePackage.setDescription(request.getDescription());
         servicePackage.setTotalSession(request.getTotalSession());
         servicePackage.setPrice(request.getPrice());
+        servicePackage.setValidityDays(request.getValidityDays());
         servicePackage.setPackageImage(request.getPackageImage());
         servicePackage.setActive(request.getActive());
 

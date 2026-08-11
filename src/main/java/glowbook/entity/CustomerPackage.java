@@ -36,6 +36,9 @@ public class CustomerPackage {
     @Column(name = "purchase_date", nullable = false)
     private LocalDate purchaseDate;
 
+    @Column(name = "valid_until")
+    private LocalDate validUntil;
+
     @Column(name = "is_active")
     @Builder.Default
     private Boolean active = true;

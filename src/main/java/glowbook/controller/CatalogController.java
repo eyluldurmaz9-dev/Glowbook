@@ -134,6 +134,7 @@ public class CatalogController {
                 .description(request.description())
                 .totalSession(request.totalSession())
                 .price(request.price())
+                .validityDays(request.validityDays() == null ? 365 : request.validityDays())
                 .packageImage(request.packageImage())
                 .active(request.active() == null || request.active())
                 .build();

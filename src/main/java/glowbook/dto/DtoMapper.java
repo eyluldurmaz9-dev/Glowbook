@@ -59,6 +59,7 @@ public final class DtoMapper {
                 servicePackage.getDescription(),
                 servicePackage.getTotalSession(),
                 servicePackage.getPrice(),
+                servicePackage.getValidityDays(),
                 servicePackage.getPackageImage(),
                 servicePackage.getActive()
         );
@@ -75,6 +76,7 @@ public final class DtoMapper {
                 customerPackage.getRemainingSession(),
                 customerPackage.getPurchasePrice(),
                 customerPackage.getPurchaseDate(),
+                customerPackage.getValidUntil(),
                 customerPackage.getActive()
         );
     }

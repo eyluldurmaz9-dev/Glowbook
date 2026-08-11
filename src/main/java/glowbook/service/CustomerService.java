@@ -28,6 +28,12 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
     }
 
+    @Transactional
+    public Customer getByIdForPackagePurchase(Integer customerId) {
+        return customerRepository.findLockedByCustomerId(customerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
+    }
+
     public Customer getByPhone(String phone) {
         return customerRepository.findByPhone(phone)
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with phone: " + phone));

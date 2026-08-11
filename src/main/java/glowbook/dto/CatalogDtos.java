@@ -47,6 +47,7 @@ public final class CatalogDtos {
             String description,
             @NotNull @Positive Integer totalSession,
             @NotNull @Positive Double price,
+            @Positive Integer validityDays,
             String packageImage,
             Boolean active
     ) {
@@ -60,6 +61,7 @@ public final class CatalogDtos {
             String description,
             Integer totalSession,
             Double price,
+            Integer validityDays,
             String packageImage,
             Boolean active
     ) {

@@ -14,4 +14,6 @@ public interface CustomerPackageRepository extends JpaRepository<CustomerPackage
             Integer customerPackageId,
             Integer customerId
     );
+
+    boolean existsByCustomerCustomerIdAndServicePackagePackageIdAndActiveTrue(Integer customerId, Integer packageId);
 }

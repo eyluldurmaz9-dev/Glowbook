@@ -4,6 +4,7 @@ import glowbook.entity.Customer;
 import glowbook.entity.CustomerPackage;
 import glowbook.entity.ServicePackage;
 import glowbook.exception.BusinessException;
+import glowbook.exception.ConflictException;
 import glowbook.exception.ResourceNotFoundException;
 import glowbook.repository.CustomerPackageRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,8 @@ public class CustomerPackageService {
     private final ServicePackageService servicePackageService;
 
     public List<CustomerPackage> getActivePackagesByCustomer(Integer customerId) {
-        return customerPackageRepository.findByCustomerCustomerIdAndActiveTrueOrderByPurchaseDateDesc(customerId);
+        return customerPackageRepository.findByCustomerCustomerIdAndActiveTrueOrderByPurchaseDateDesc(customerId)
+                .stream().filter(item -> item.getValidUntil() == null || !item.getValidUntil().isBefore(LocalDate.now())).toList();
     }
 
     public CustomerPackage getById(Integer customerPackageId) {
@@ -38,8 +40,12 @@ public class CustomerPackageService {
 
     @Transactional
     public CustomerPackage purchase(Integer customerId, Integer packageId) {
-        Customer customer = customerService.getById(customerId);
+        Customer customer = customerService.getByIdForPackagePurchase(customerId);
         ServicePackage servicePackage = servicePackageService.getActiveById(packageId);
+
+        if (customerPackageRepository.existsByCustomerCustomerIdAndServicePackagePackageIdAndActiveTrue(customerId, packageId)) {
+            throw new ConflictException("Customer already owns an active copy of this package");
+        }
 
         CustomerPackage customerPackage = CustomerPackage.builder()
                 .customer(customer)
@@ -47,6 +53,7 @@ public class CustomerPackageService {
                 .remainingSession(servicePackage.getTotalSession())
                 .purchasePrice(servicePackage.getPrice())
                 .purchaseDate(LocalDate.now())
+                .validUntil(LocalDate.now().plusDays(servicePackage.getValidityDays()))
                 .active(true)
                 .build();
 
@@ -60,6 +67,7 @@ public class CustomerPackageService {
         customerPackage.setRemainingSession(request.getRemainingSession());
         customerPackage.setPurchasePrice(request.getPurchasePrice());
         customerPackage.setPurchaseDate(request.getPurchaseDate());
+        customerPackage.setValidUntil(request.getValidUntil());
         customerPackage.setActive(request.getActive());
 
         return customerPackageRepository.save(customerPackage);
@@ -75,6 +83,12 @@ public class CustomerPackageService {
 
         if (customerPackage.getRemainingSession() <= 0) {
             throw new BusinessException("Customer package has no remaining session");
+        }
+
+        if (customerPackage.getValidUntil() != null && customerPackage.getValidUntil().isBefore(LocalDate.now())) {
+            customerPackage.setActive(false);
+            customerPackageRepository.save(customerPackage);
+            throw new BusinessException("Customer package has expired");
         }
 
         customerPackage.setRemainingSession(customerPackage.getRemainingSession() - 1);
