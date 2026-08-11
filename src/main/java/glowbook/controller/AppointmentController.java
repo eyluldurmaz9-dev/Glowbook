@@ -41,7 +41,13 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public ApiResponse<AppointmentDtos.AppointmentResponse> create(@Valid @RequestBody AppointmentDtos.AppointmentRequest request) {
+    public ApiResponse<AppointmentDtos.AppointmentResponse> create(
+            @Valid @RequestBody AppointmentDtos.AppointmentRequest request,
+            Authentication authentication
+    ) {
+        if (request.customerId() != null) {
+            authorizationSupport.assertCustomerCanAccess(request.customerId(), authentication);
+        }
         Appointment appointment = appointmentService.create(toAppointment(request));
         return ApiResponse.success("Appointment created", DtoMapper.toAppointmentResponse(appointment));
     }

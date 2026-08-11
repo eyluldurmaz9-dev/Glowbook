@@ -6,6 +6,7 @@ import glowbook.entity.AppointmentStatus;
 import glowbook.entity.EmployeeService;
 import glowbook.entity.WorkingHour;
 import glowbook.exception.BusinessException;
+import glowbook.exception.ConflictException;
 import glowbook.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -63,7 +64,7 @@ public class AppointmentAlgorithmService {
                 .anyMatch(time -> time.equals(appointmentTime));
 
         if (!slotExists) {
-            throw new BusinessException("Selected slot is not available");
+            throw new ConflictException("Selected slot is not available");
         }
     }
 

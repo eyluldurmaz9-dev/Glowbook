@@ -8,6 +8,7 @@ import glowbook.entity.Employee;
 import glowbook.entity.NotificationType;
 import glowbook.entity.ServiceOption;
 import glowbook.exception.BusinessException;
+import glowbook.exception.ConflictException;
 import glowbook.exception.ResourceNotFoundException;
 import glowbook.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
@@ -72,7 +73,7 @@ public class AppointmentService {
 
     @Transactional
     public Appointment create(Appointment request) {
-        Employee employee = employeeManagementService.getActiveById(request.getEmployee().getEmployeeId());
+        Employee employee = employeeManagementService.getActiveByIdForBooking(request.getEmployee().getEmployeeId());
         glowbook.entity.Service service = serviceCatalogService.getActiveById(request.getService().getServiceId());
         ServiceOption option = serviceOptionService.getActiveByService(service.getServiceId(), request.getServiceOption().getOptionId());
 
@@ -208,7 +209,7 @@ public class AppointmentService {
         );
 
         if (occupied) {
-            throw new BusinessException("Selected appointment time is already occupied");
+            throw new ConflictException("Selected appointment time is already occupied");
         }
     }
 

@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -58,7 +57,7 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public Notification createAndSendSms(Customer customer, Appointment appointment, NotificationType type, String title, String message, String phone) {
         Notification notification = create(customer, appointment, type, title, message);
         try {
@@ -71,7 +70,7 @@ public class NotificationService {
         return notificationRepository.save(notification);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional
     public void createAndSendSmsSafely(Customer customer, Appointment appointment, NotificationType type, String title, String message, String phone) {
         try {
             Notification notification = create(customer, appointment, type, title, message);

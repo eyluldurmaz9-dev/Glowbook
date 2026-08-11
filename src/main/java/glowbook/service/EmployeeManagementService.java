@@ -37,6 +37,12 @@ public class EmployeeManagementService {
     }
 
     @Transactional
+    public Employee getActiveByIdForBooking(String employeeId) {
+        return employeeRepository.findLockedByEmployeeIdAndActiveTrue(employeeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active employee not found: " + employeeId));
+    }
+
+    @Transactional
     public Employee create(Employee employee) {
         employee.setPassword(encodePasswordIfNeeded(employee.getPassword()));
         return employeeRepository.save(employee);

@@ -3,6 +3,7 @@ package glowbook.dto;
 import glowbook.entity.AppointmentStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,7 +24,7 @@ public final class AppointmentDtos {
             @NotNull Integer optionId,
             String customerName,
             String customerSurname,
-            String phone,
+            @Pattern(regexp = "^\\+?[0-9][0-9 ()-]{7,19}$", message = "must be a valid phone number") String phone,
             @NotNull LocalDate appointmentDate,
             @NotNull LocalTime appointmentTime
     ) {
