@@ -161,6 +161,7 @@ public class CatalogSeedConfig {
             servicePackage.setDescription(description);
             servicePackage.setTotalSession(sessions);
             servicePackage.setPrice(price);
+            servicePackage.setValidityDays(365);
             servicePackage.setActive(true);
             servicePackageRepository.save(servicePackage);
             return;
@@ -171,6 +172,7 @@ public class CatalogSeedConfig {
                 .description(description)
                 .totalSession(sessions)
                 .price(price)
+                .validityDays(365)
                 .active(true)
                 .build());
     }

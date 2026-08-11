@@ -34,8 +34,9 @@ class PackagePurchaseIntegrationTest {
                 .firstName("Package").lastName("Buyer")
                 .phone("05551234569").email("package-buyer@glowbook.test")
                 .password(passwordEncoder.encode("test-password")).active(true).build());
-        Integer packageId = servicePackageRepository.findByActiveTrueOrderByPackageNameAsc()
-                .getFirst().getPackageId();
+        var legacyPackage = servicePackageRepository.findByActiveTrueOrderByPackageNameAsc().getFirst();
+        legacyPackage.setValidityDays(null);
+        Integer packageId = servicePackageRepository.save(legacyPackage).getPackageId();
         long appointmentsBefore = appointmentRepository.count();
         String token = jwtTokenService.generateToken(customer.getCustomerId().toString(), UserRole.CUSTOMER);
         String path = "/api/customers/" + customer.getCustomerId() + "/packages/" + packageId;

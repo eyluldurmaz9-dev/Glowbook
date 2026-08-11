@@ -53,7 +53,7 @@ public class CustomerPackageService {
                 .remainingSession(servicePackage.getTotalSession())
                 .purchasePrice(servicePackage.getPrice())
                 .purchaseDate(LocalDate.now())
-                .validUntil(LocalDate.now().plusDays(servicePackage.getValidityDays()))
+                .validUntil(LocalDate.now().plusDays(effectiveValidityDays(servicePackage)))
                 .active(true)
                 .build();
 
@@ -112,5 +112,9 @@ public class CustomerPackageService {
         CustomerPackage customerPackage = getById(customerPackageId);
         customerPackage.setActive(false);
         return customerPackageRepository.save(customerPackage);
+    }
+
+    private long effectiveValidityDays(ServicePackage servicePackage) {
+        return servicePackage.getValidityDays() == null ? 365 : servicePackage.getValidityDays();
     }
 }
