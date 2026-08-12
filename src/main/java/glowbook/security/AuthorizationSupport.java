@@ -35,4 +35,16 @@ public class AuthorizationSupport {
         }
         throw new AccessDeniedException("Access denied");
     }
+
+    public void assertEmployeeCanAccess(String employeeId, Authentication authentication) {
+        if (hasRole(authentication, UserRole.ADMIN)) {
+            return;
+        }
+        if (hasRole(authentication, UserRole.EMPLOYEE)
+                && employeeId != null
+                && employeeId.equals(authentication.getName())) {
+            return;
+        }
+        throw new AccessDeniedException("Access denied");
+    }
 }

@@ -98,8 +98,10 @@ public class AppointmentController {
     public ApiResponse<List<AppointmentDtos.AppointmentResponse>> getEmployeeSchedule(
             @PathVariable String employeeId,
             @RequestParam LocalDate startDate,
-            @RequestParam LocalDate endDate
+            @RequestParam LocalDate endDate,
+            Authentication authentication
     ) {
+        authorizationSupport.assertEmployeeCanAccess(employeeId, authentication);
         return ApiResponse.success("Employee schedule listed", appointmentService.getEmployeeSchedule(employeeId, startDate, endDate)
                 .stream()
                 .map(DtoMapper::toAppointmentResponse)

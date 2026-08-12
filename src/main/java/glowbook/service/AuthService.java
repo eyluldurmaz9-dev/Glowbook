@@ -89,25 +89,26 @@ public class AuthService {
     private AuthDtos.AuthResponse loginEmployee(AuthDtos.LoginRequest request, UserRole requestedRole) {
         Employee employee = employeeRepository.findByEmployeeIdAndActiveTrue(request.username())
                 .or(() -> employeeRepository.findByEmailAndActiveTrue(request.username()))
-                .orElseThrow(() -> new BusinessException("Invalid employee id or password"));
+                .orElseThrow(() -> new BusinessException("Kullanıcı adı veya şifre hatalı."));
 
         if (!passwordMatches(request.password(), employee.getPassword())) {
-            throw new BusinessException("Invalid employee id or password");
+            throw new BusinessException("Kullanıcı adı veya şifre hatalı.");
         }
 
-        boolean adminEmployee = employee.getRole() == UserRole.ADMIN;
-        if (requestedRole == UserRole.ADMIN && !adminEmployee) {
-            throw new BusinessException("Invalid employee id or password");
+        if (employee.getRole() != requestedRole) {
+            if (requestedRole == UserRole.ADMIN) {
+                throw new BusinessException("Bu hesap yönetici hesabı değil.");
+            }
+            throw new BusinessException("Bu hesap personel hesabı değil.");
         }
-        UserRole tokenRole = adminEmployee ? UserRole.ADMIN : UserRole.EMPLOYEE;
-        String token = jwtTokenService.generateToken(employee.getEmployeeId(), tokenRole);
-        String refresh = createRefreshTokenOrNull(employee.getEmployeeId(), tokenRole);
+        String token = jwtTokenService.generateToken(employee.getEmployeeId(), requestedRole);
+        String refresh = createRefreshTokenOrNull(employee.getEmployeeId(), requestedRole);
 
         return new AuthDtos.AuthResponse(
                 token,
                 refresh,
                 "Bearer",
-                tokenRole.name(),
+                requestedRole.name(),
                 null,
                 employee.getEmployeeId(),
                 employee.getFirstName() + " " + employee.getLastName()

@@ -10,4 +10,24 @@ No plaintext password is present in source. The employee demo account is a real 
 
 Login uses `POST /api/auth/login` with `username`, `password` and requested `role`. The JWT role comes from the stored account type/employee role, never from registration or an unchecked client request. Normal registration always returns CUSTOMER.
 
-`DemoUserIntegrationTest` verifies all three logins, ADMIN/EMPLOYEE access to staff endpoints, CUSTOMER rejection, and the employee-service link.
+## Yetki matrisi
+
+`DemoUserIntegrationTest` aşağıdaki davranışları otomatik doğrular:
+
+- anonim kullanıcı → korumalı endpoint: `401`
+- müşteri → yönetici endpointi: `403`
+- müşteri → personel endpointi: `403`
+- personel → yalnızca yönetici endpointi: `403`
+- personel → personel program endpointi: başarılı
+- yönetici → yönetim endpointi: başarılı
+- müşteri → müşteri rolüyle giriş: başarılı
+- yanlış parola: güvenli hata
+- yanlış giriş türü: anlaşılır Türkçe rol hatası
+- manipüle edilmiş kayıt isteğindeki `ADMIN` rolü: yok sayılır, sonuç `CUSTOMER`
+- demo personel: gerçek `DEMOEMP` çalışan kaydına ve aktif hizmetlere bağlı
+
+Ayrı `DemoUserConfigConditionTest`, özellik false olduğunda veya hiç
+tanımlanmadığında demo kullanıcı yapılandırmasının yüklenmediğini doğrular.
+
+Railway kurulum ve manuel giriş adımları için `docs/DEMO_ACCOUNTS.md` dosyasına
+bakın.
