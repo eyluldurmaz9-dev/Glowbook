@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -102,6 +103,31 @@ class AppointmentControllerIntegrationTest {
         mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    void availabilityContainsOnlyFullHoursAndEmployeeIdentity() throws Exception {
+        mockMvc.perform(get("/api/appointments/available-slots")
+                        .param("serviceId", serviceId.toString())
+                        .param("optionId", optionId.toString())
+                        .param("date", workingDate.toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].employeeId").isNotEmpty())
+                .andExpect(jsonPath("$.data[0].employeeName").isNotEmpty())
+                .andExpect(jsonPath("$.data[*].availableTimes[?(@ =~ /.*:30(:00)?/)]").doesNotExist());
+    }
+
+    @Test
+    void rejectsHalfHourStarts() throws Exception {
+        for (String time : java.util.List.of("10:30", "11:30")) {
+            Map<String, Object> payload = guestPayload();
+            payload.put("appointmentTime", time);
+            mockMvc.perform(post("/api/appointments")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(payload)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.message").value("Randevu saati tam saat olmalıdır (örnek: 10:00)."));
+        }
     }
 
     @Test

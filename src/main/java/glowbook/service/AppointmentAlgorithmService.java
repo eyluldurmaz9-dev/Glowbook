@@ -23,7 +23,7 @@ import java.util.Set;
 @Transactional(readOnly = true)
 public class AppointmentAlgorithmService {
 
-    private static final int SLOT_MINUTES = 30;
+    private static final int SLOT_MINUTES = 60;
     private static final Set<AppointmentStatus> BLOCKING_STATUSES = Set.of(
             AppointmentStatus.PENDING,
             AppointmentStatus.APPROVED
@@ -60,6 +60,7 @@ public class AppointmentAlgorithmService {
     }
 
     public void validateSlot(String employeeId, Integer serviceId, Integer optionId, LocalDate appointmentDate, LocalTime appointmentTime) {
+        requireFullHour(appointmentTime);
         boolean slotExists = findAvailableSlots(serviceId, optionId, appointmentDate)
                 .stream()
                 .filter(slot -> slot.employeeId().equals(employeeId))
@@ -71,6 +72,12 @@ public class AppointmentAlgorithmService {
         }
     }
 
+    public void requireFullHour(LocalTime appointmentTime) {
+        if (appointmentTime == null || appointmentTime.getMinute() != 0 || appointmentTime.getSecond() != 0) {
+            throw new BusinessException("Randevu saati tam saat olmalıdır (örnek: 10:00).");
+        }
+    }
+
     private AppointmentDtos.AvailableSlotResponse toAvailableSlotResponse(
             EmployeeService employeeService,
             LocalDate appointmentDate,
@@ -78,7 +85,7 @@ public class AppointmentAlgorithmService {
     ) {
         String employeeId = employeeService.getEmployee().getEmployeeId();
         List<LocalTime> availableTimes = new ArrayList<>();
-        LocalTime time = workingHour.getStartTime();
+        LocalTime time = nextFullHour(workingHour.getStartTime());
 
         while (time != null && workingHour.getEndTime() != null && time.plusMinutes(SLOT_MINUTES).compareTo(workingHour.getEndTime()) <= 0) {
             if (!isOccupied(employeeId, appointmentDate, time)) {
@@ -93,6 +100,13 @@ public class AppointmentAlgorithmService {
                 appointmentDate,
                 availableTimes
         );
+    }
+
+    private LocalTime nextFullHour(LocalTime time) {
+        if (time == null || (time.getMinute() == 0 && time.getSecond() == 0)) {
+            return time;
+        }
+        return time.plusHours(1).withMinute(0).withSecond(0).withNano(0);
     }
 
     private boolean isOccupied(String employeeId, LocalDate appointmentDate, LocalTime appointmentTime) {
