@@ -2,11 +2,12 @@
 
 Yönetici panelindeki personel formunda `Hizmet Yetkinlikleri` bölümü bulunur.
 Aktif ana hizmetler gerçek katalog verisine göre gruplandırılır ve her grubun
-aktif alt hizmetleri checkbox olarak gösterilir.
+aktif ana hizmetleri checkbox olarak gösterilir. Aynı ada sahip katalog kayıtları
+tek satırda birleştirilir.
 
 Yönetici:
 
-- sıfır veya daha fazla alt hizmet seçebilir;
+- sıfır veya daha fazla ana hizmet seçebilir;
 - bir çalışana farklı kategorilerden birden çok yetkinlik verebilir;
 - düzenlemede mevcut seçimleri işaretli görür;
 - seçim ekleyebilir veya kaldırabilir;

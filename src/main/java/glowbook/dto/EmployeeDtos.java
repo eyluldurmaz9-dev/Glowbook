@@ -20,7 +20,8 @@ public final class EmployeeDtos {
             String phone,
             String email,
             Boolean active,
-            @NotNull Set<Integer> optionIds
+            Set<Integer> serviceIds,
+            Set<Integer> optionIds
     ) {
     }
 
@@ -54,7 +55,8 @@ public final class EmployeeDtos {
     }
 
     public record EmployeeAssignmentsRequest(
-            @NotNull Set<Integer> optionIds
+            Set<Integer> serviceIds,
+            Set<Integer> optionIds
     ) {
     }
 

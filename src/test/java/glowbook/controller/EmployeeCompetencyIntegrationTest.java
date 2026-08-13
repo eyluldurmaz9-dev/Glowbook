@@ -70,6 +70,34 @@ class EmployeeCompetencyIntegrationTest {
     }
 
     @Test
+    void adminCreatesMainServiceCompetencyThatCoversEveryOption() throws Exception {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("employeeId", "COMPTEST");
+        payload.put("firstName", "Competency");
+        payload.put("lastName", "Tester");
+        payload.put("password", "safe-test-password");
+        payload.put("email", "competency@glowbook.test");
+        payload.put("active", true);
+        payload.put("serviceIds", List.of(serviceId));
+
+        mockMvc.perform(post("/api/admin/employees")
+                        .header("Authorization", bearer(adminToken))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.assignedServiceCount").value(1))
+                .andExpect(jsonPath("$.data.assignedServices[0].serviceId").value(serviceId))
+                .andExpect(jsonPath("$.data.assignedServices[0].optionId").doesNotExist());
+
+        mockMvc.perform(get("/api/catalog/services/{serviceId}/options/{optionId}/employees", serviceId, firstOptionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.employeeId == 'COMPTEST')]").exists());
+        mockMvc.perform(get("/api/catalog/services/{serviceId}/options/{optionId}/employees", serviceId, secondOptionId))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.employeeId == 'COMPTEST')]").exists());
+    }
+
+    @Test
     void adminCreatesEditsAndRemovesOptionCompetencies() throws Exception {
         createEmployee(List.of(firstOptionId));
 

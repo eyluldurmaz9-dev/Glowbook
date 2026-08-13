@@ -92,6 +92,24 @@ public class EmployeeServiceAssignmentService {
     }
 
     @Transactional
+    public List<EmployeeService> replaceServiceAssignments(String employeeId, Collection<Integer> serviceIds) {
+        var employee = employeeManagementService.getById(employeeId);
+        var uniqueServiceIds = new LinkedHashSet<>(serviceIds == null ? List.of() : serviceIds);
+        var services = uniqueServiceIds.stream()
+                .map(serviceCatalogService::getActiveById)
+                .toList();
+
+        employeeServiceRepository.deleteByEmployeeEmployeeId(employeeId);
+        employeeServiceRepository.flush();
+        return services.stream()
+                .map(service -> employeeServiceRepository.save(EmployeeService.builder()
+                        .employee(employee)
+                        .service(service)
+                        .build()))
+                .toList();
+    }
+
+    @Transactional
     public void delete(Integer employeeServiceId) {
         employeeServiceRepository.delete(getById(employeeServiceId));
     }

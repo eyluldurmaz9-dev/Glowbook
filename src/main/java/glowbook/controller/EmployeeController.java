@@ -40,7 +40,7 @@ public class EmployeeController {
     public ApiResponse<EmployeeDtos.EmployeeResponse> createEmployee(@Valid @RequestBody EmployeeDtos.EmployeeRequest request) {
         Employee employee = toEmployee(request);
         Employee saved = employeeManagementService.create(employee);
-        employeeServiceAssignmentService.replaceOptionAssignments(saved.getEmployeeId(), request.optionIds());
+        replaceAssignments(saved.getEmployeeId(), request.serviceIds(), request.optionIds());
         return ApiResponse.success("Employee created", toEmployeeResponse(saved));
     }
 
@@ -51,7 +51,7 @@ public class EmployeeController {
             @Valid @RequestBody EmployeeDtos.EmployeeRequest request
     ) {
         Employee saved = employeeManagementService.update(employeeId, toEmployee(request));
-        employeeServiceAssignmentService.replaceOptionAssignments(employeeId, request.optionIds());
+        replaceAssignments(employeeId, request.serviceIds(), request.optionIds());
         return ApiResponse.success("Employee updated", toEmployeeResponse(saved));
     }
 
@@ -80,8 +80,8 @@ public class EmployeeController {
             @PathVariable String employeeId,
             @Valid @RequestBody EmployeeDtos.EmployeeAssignmentsRequest request
     ) {
-        return ApiResponse.success("Employee services updated", employeeServiceAssignmentService
-                .replaceOptionAssignments(employeeId, request.optionIds()).stream()
+        return ApiResponse.success("Employee services updated", replaceAssignments(
+                employeeId, request.serviceIds(), request.optionIds()).stream()
                 .map(DtoMapper::toEmployeeServiceResponse)
                 .toList());
     }
@@ -122,5 +122,16 @@ public class EmployeeController {
     private EmployeeDtos.EmployeeResponse toEmployeeResponse(Employee employee) {
         return DtoMapper.toEmployeeResponse(employee,
                 employeeServiceAssignmentService.getAssignments(employee.getEmployeeId()));
+    }
+
+    private List<glowbook.entity.EmployeeService> replaceAssignments(
+            String employeeId,
+            java.util.Set<Integer> serviceIds,
+            java.util.Set<Integer> optionIds
+    ) {
+        if (serviceIds != null) {
+            return employeeServiceAssignmentService.replaceServiceAssignments(employeeId, serviceIds);
+        }
+        return employeeServiceAssignmentService.replaceOptionAssignments(employeeId, optionIds);
     }
 }
