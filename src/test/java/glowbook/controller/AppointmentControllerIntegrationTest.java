@@ -20,6 +20,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -128,6 +130,35 @@ class AppointmentControllerIntegrationTest {
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.message").value("Randevu saati tam saat olmalıdır (örnek: 10:00)."));
         }
+    }
+
+    @Test
+    void rejectsPastDateForGuestBooking() throws Exception {
+        Map<String, Object> payload = guestPayload();
+        payload.put("appointmentDate", LocalDate.now(ZoneId.of("Europe/Istanbul")).minusDays(1).toString());
+
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Geçmiş bir tarih için randevu oluşturamazsın."));
+    }
+
+    @Test
+    void rejectsPastFullHourTodayForGuestBooking() throws Exception {
+        ZoneId istanbul = ZoneId.of("Europe/Istanbul");
+        Map<String, Object> payload = guestPayload();
+        payload.put("appointmentDate", LocalDate.now(istanbul).toString());
+        payload.put("appointmentTime", LocalTime.now(istanbul)
+                .withMinute(0).withSecond(0).withNano(0).toString());
+
+        mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message")
+                        .value("Bu saat artık geçmişte kaldı. Lütfen başka bir saat seç."));
     }
 
     @Test

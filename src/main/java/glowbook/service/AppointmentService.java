@@ -196,7 +196,8 @@ public class AppointmentService {
     }
 
     private void validateAvailability(String employeeId, Appointment request) {
-        appointmentAlgorithmService.requireFullHour(request.getAppointmentTime());
+        appointmentAlgorithmService.validateAppointmentTime(
+                request.getAppointmentDate(), request.getAppointmentTime());
         if (holidayService.isHoliday(request.getAppointmentDate())) {
             throw new BusinessException("Appointments cannot be created on holidays");
         }
