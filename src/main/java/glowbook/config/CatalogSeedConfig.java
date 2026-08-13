@@ -24,6 +24,7 @@ import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.text.Normalizer;
 import glowbook.security.UserRole;
 
 @Configuration
@@ -120,7 +121,7 @@ public class CatalogSeedConfig {
 
     private glowbook.entity.Service createService(String name, String description, String image) {
         return serviceRepository.findAll().stream()
-                .filter(service -> name.equalsIgnoreCase(service.getServiceName()))
+                .filter(service -> canonicalName(name).equals(canonicalName(service.getServiceName())))
                 .findFirst()
                 .map(service -> {
                     service.setDescription(description);
@@ -198,6 +199,17 @@ public class CatalogSeedConfig {
                         .active(true)
                         .role(role)
                         .build()));
+    }
+
+    private String canonicalName(String value) {
+        if (value == null) return "";
+        return Normalizer.normalize(value, Normalizer.Form.NFD)
+                .replaceAll("\\p{M}", "")
+                .replace('ı', 'i')
+                .replace('İ', 'I')
+                .toLowerCase(java.util.Locale.ROOT)
+                .replaceAll("[^a-z0-9]+", " ")
+                .trim();
     }
 
     private void assignAll(Employee employee, List<glowbook.entity.Service> services) {
