@@ -67,7 +67,8 @@ class DemoUserIntegrationTest {
                 "firstName", "Auth",
                 "lastName", "Test",
                 "password", "not-used-password",
-                "active", true));
+                "active", true,
+                "optionIds", java.util.List.of()));
         mockMvc.perform(post("/api/admin/employees")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(employeePayload)
@@ -89,10 +90,11 @@ class DemoUserIntegrationTest {
         mockMvc.perform(get("/api/admin/customers"))
                 .andExpect(status().isUnauthorized());
 
-        long assignments = employeeServiceRepository.findAll().stream()
+        var demoAssignments = employeeServiceRepository.findAll().stream()
                 .filter(item -> "DEMOEMP".equals(item.getEmployee().getEmployeeId()))
-                .count();
-        assertThat(assignments).isGreaterThan(0);
+                .toList();
+        assertThat(demoAssignments).isNotEmpty().hasSizeLessThanOrEqualTo(3);
+        assertThat(demoAssignments).allMatch(item -> item.getServiceOption() != null);
     }
 
     @Test

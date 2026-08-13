@@ -7,6 +7,7 @@ import glowbook.repository.CustomerRepository;
 import glowbook.repository.EmployeeRepository;
 import glowbook.repository.EmployeeServiceRepository;
 import glowbook.repository.ServiceRepository;
+import glowbook.repository.ServiceOptionRepository;
 import glowbook.security.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +28,7 @@ public class DemoUserConfig {
     private final EmployeeRepository employeeRepository;
     private final EmployeeServiceRepository employeeServiceRepository;
     private final ServiceRepository serviceRepository;
+    private final ServiceOptionRepository serviceOptionRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Value("${app.demo-users.admin-password}")
@@ -52,12 +54,14 @@ public class DemoUserConfig {
         Employee employee = upsertEmployee("DEMOEMP", "Demo", "Employee", "employee@glowbook.test", employeePassword, UserRole.EMPLOYEE);
         upsertCustomer();
 
+        employeeServiceRepository.deleteByEmployeeEmployeeId(employee.getEmployeeId());
         serviceRepository.findAll().stream()
                 .filter(service -> Boolean.TRUE.equals(service.getActive()))
-                .forEach(service -> {
-                    assign(admin, service);
-                    assign(employee, service);
-                });
+                .limit(3)
+                .flatMap(service -> serviceOptionRepository
+                        .findByServiceServiceIdAndActiveTrueOrderByOptionNameAsc(service.getServiceId())
+                        .stream().limit(1))
+                .forEach(option -> assign(employee, option));
     }
 
     private Employee upsertEmployee(String id, String firstName, String lastName, String email, String password, UserRole role) {
@@ -84,10 +88,12 @@ public class DemoUserConfig {
         customerRepository.save(customer);
     }
 
-    private void assign(Employee employee, glowbook.entity.Service service) {
-        if (!employeeServiceRepository.existsByEmployeeEmployeeIdAndServiceServiceId(employee.getEmployeeId(), service.getServiceId())) {
-            employeeServiceRepository.save(EmployeeService.builder().employee(employee).service(service).build());
-        }
+    private void assign(Employee employee, glowbook.entity.ServiceOption option) {
+        employeeServiceRepository.save(EmployeeService.builder()
+                .employee(employee)
+                .service(option.getService())
+                .serviceOption(option)
+                .build());
     }
 
     private void requirePassword(String password, String environmentName) {

@@ -67,7 +67,10 @@ public class WaitingListService {
         );
 
         for (WaitingList waitingList : candidates) {
-            boolean hasSlot = appointmentAlgorithmService.findAvailableSlots(serviceId, appointmentDate)
+            boolean hasSlot = appointmentAlgorithmService.findAvailableSlots(
+                            serviceId,
+                            waitingList.getServiceOption().getOptionId(),
+                            appointmentDate)
                     .stream()
                     .flatMap(slot -> slot.availableTimes().stream())
                     .anyMatch(time -> isInsidePreference(waitingList, time));

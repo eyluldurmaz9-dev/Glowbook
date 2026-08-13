@@ -35,7 +35,7 @@ public class AppointmentAlgorithmService {
     private final EmployeeLeaveService employeeLeaveService;
     private final HolidayService holidayService;
 
-    public List<AppointmentDtos.AvailableSlotResponse> findAvailableSlots(Integer serviceId, LocalDate appointmentDate) {
+    public List<AppointmentDtos.AvailableSlotResponse> findAvailableSlots(Integer serviceId, Integer optionId, LocalDate appointmentDate) {
         if (holidayService.isHoliday(appointmentDate)) {
             return List.of();
         }
@@ -45,7 +45,10 @@ public class AppointmentAlgorithmService {
             return List.of();
         }
 
-        return employeeServiceAssignmentService.getEmployeesByService(serviceId)
+        List<EmployeeService> qualifiedEmployees = optionId == null
+                ? employeeServiceAssignmentService.getEmployeesByService(serviceId)
+                : employeeServiceAssignmentService.getEmployeesByServiceOption(serviceId, optionId);
+        return qualifiedEmployees
                 .stream()
                 .filter(employeeService -> !employeeLeaveService.isEmployeeOnLeave(
                         employeeService.getEmployee().getEmployeeId(),
@@ -56,8 +59,8 @@ public class AppointmentAlgorithmService {
                 .toList();
     }
 
-    public void validateSlot(String employeeId, Integer serviceId, LocalDate appointmentDate, LocalTime appointmentTime) {
-        boolean slotExists = findAvailableSlots(serviceId, appointmentDate)
+    public void validateSlot(String employeeId, Integer serviceId, Integer optionId, LocalDate appointmentDate, LocalTime appointmentTime) {
+        boolean slotExists = findAvailableSlots(serviceId, optionId, appointmentDate)
                 .stream()
                 .filter(slot -> slot.employeeId().equals(employeeId))
                 .flatMap(slot -> slot.availableTimes().stream())

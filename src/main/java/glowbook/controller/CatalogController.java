@@ -3,11 +3,13 @@ package glowbook.controller;
 import glowbook.dto.ApiResponse;
 import glowbook.dto.CatalogDtos;
 import glowbook.dto.DtoMapper;
+import glowbook.dto.EmployeeDtos;
 import glowbook.entity.ServiceOption;
 import glowbook.entity.ServicePackage;
 import glowbook.service.ServiceCatalogService;
 import glowbook.service.ServiceOptionService;
 import glowbook.service.ServicePackageService;
+import glowbook.service.EmployeeServiceAssignmentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -23,6 +25,7 @@ public class CatalogController {
     private final ServiceCatalogService serviceCatalogService;
     private final ServiceOptionService serviceOptionService;
     private final ServicePackageService servicePackageService;
+    private final EmployeeServiceAssignmentService employeeServiceAssignmentService;
 
     @GetMapping("/catalog/services")
     public ApiResponse<List<CatalogDtos.ServiceResponse>> getServices() {
@@ -37,6 +40,33 @@ public class CatalogController {
         return ApiResponse.success("Service options listed", serviceOptionService.getActiveOptionsByService(serviceId)
                 .stream()
                 .map(DtoMapper::toServiceOptionResponse)
+                .toList());
+    }
+
+    @GetMapping("/catalog/services/{serviceId}/options/{optionId}/employees")
+    public ApiResponse<List<EmployeeDtos.EmployeeServiceResponse>> getQualifiedEmployees(
+            @PathVariable Integer serviceId,
+            @PathVariable Integer optionId
+    ) {
+        return ApiResponse.success("Qualified employees listed", employeeServiceAssignmentService
+                .getEmployeesByServiceOption(serviceId, optionId).stream()
+                .map(DtoMapper::toEmployeeServiceResponse)
+                .toList());
+    }
+
+    @GetMapping("/catalog/services/{serviceId}/employees")
+    public ApiResponse<List<EmployeeDtos.EmployeeServiceResponse>> getServiceEmployees(
+            @PathVariable Integer serviceId
+    ) {
+        return ApiResponse.success("Service employees listed", employeeServiceAssignmentService
+                .getEmployeesByService(serviceId).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        item -> item.getEmployee().getEmployeeId(),
+                        item -> item,
+                        (first, ignored) -> first,
+                        java.util.LinkedHashMap::new
+                )).values().stream()
+                .map(DtoMapper::toEmployeeServiceResponse)
                 .toList());
     }
 

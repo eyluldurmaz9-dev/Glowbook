@@ -1,6 +1,7 @@
 package glowbook.dto;
 
 import glowbook.entity.*;
+import java.util.List;
 
 public final class DtoMapper {
 
@@ -19,14 +20,19 @@ public final class DtoMapper {
         );
     }
 
-    public static EmployeeDtos.EmployeeResponse toEmployeeResponse(Employee employee) {
+    public static EmployeeDtos.EmployeeResponse toEmployeeResponse(Employee employee, List<EmployeeService> assignments) {
+        List<EmployeeDtos.EmployeeServiceResponse> competencies = assignments.stream()
+                .map(DtoMapper::toEmployeeServiceResponse)
+                .toList();
         return new EmployeeDtos.EmployeeResponse(
                 employee.getEmployeeId(),
                 employee.getFirstName(),
                 employee.getLastName(),
                 employee.getPhone(),
                 employee.getEmail(),
-                employee.getActive()
+                employee.getActive(),
+                (int) assignments.stream().map(item -> item.getService().getServiceId()).distinct().count(),
+                competencies
         );
     }
 
@@ -89,7 +95,9 @@ public final class DtoMapper {
                 employee.getEmployeeId(),
                 employee.getFirstName() + " " + employee.getLastName(),
                 service.getServiceId(),
-                service.getServiceName()
+                service.getServiceName(),
+                employeeService.getServiceOption() == null ? null : employeeService.getServiceOption().getOptionId(),
+                employeeService.getServiceOption() == null ? null : employeeService.getServiceOption().getOptionName()
         );
     }
 

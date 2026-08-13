@@ -25,4 +25,12 @@ public class EmployeeService {
     @JoinColumn(name = "service_id", nullable = false)
     private Service service;
 
+    /**
+     * Null keeps legacy service-wide assignments valid. New admin-managed
+     * competencies are stored at the more precise option/sub-service level.
+     */
+    @ManyToOne
+    @JoinColumn(name = "option_id")
+    private ServiceOption serviceOption;
+
 }

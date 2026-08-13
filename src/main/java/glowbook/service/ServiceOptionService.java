@@ -31,6 +31,15 @@ public class ServiceOptionService {
                 .orElseThrow(() -> new ResourceNotFoundException("Active option not found: " + optionId));
     }
 
+    public ServiceOption getActiveById(Integer optionId) {
+        ServiceOption option = serviceOptionRepository.findById(optionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Service option not found: " + optionId));
+        if (!Boolean.TRUE.equals(option.getActive()) || !Boolean.TRUE.equals(option.getService().getActive())) {
+            throw new ResourceNotFoundException("Active service option not found: " + optionId);
+        }
+        return option;
+    }
+
     @Transactional
     public ServiceOption create(Integer serviceId, ServiceOption option) {
         option.setService(serviceCatalogService.getActiveById(serviceId));

@@ -35,9 +35,10 @@ public class AppointmentController {
     @GetMapping("/available-slots")
     public ApiResponse<List<AppointmentDtos.AvailableSlotResponse>> getAvailableSlots(
             @RequestParam Integer serviceId,
+            @RequestParam(required = false) Integer optionId,
             @RequestParam LocalDate date
     ) {
-        return ApiResponse.success("Available slots listed", appointmentAlgorithmService.findAvailableSlots(serviceId, date));
+        return ApiResponse.success("Available slots listed", appointmentAlgorithmService.findAvailableSlots(serviceId, optionId, date));
     }
 
     @PostMapping

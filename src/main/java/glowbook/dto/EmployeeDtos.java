@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 public final class EmployeeDtos {
 
@@ -14,10 +16,11 @@ public final class EmployeeDtos {
             @NotBlank String employeeId,
             @NotBlank String firstName,
             @NotBlank String lastName,
-            @NotBlank String password,
+            String password,
             String phone,
             String email,
-            Boolean active
+            Boolean active,
+            @NotNull Set<Integer> optionIds
     ) {
     }
 
@@ -27,7 +30,9 @@ public final class EmployeeDtos {
             String lastName,
             String phone,
             String email,
-            Boolean active
+            Boolean active,
+            Integer assignedServiceCount,
+            List<EmployeeServiceResponse> assignedServices
     ) {
     }
 
@@ -42,7 +47,14 @@ public final class EmployeeDtos {
             String employeeId,
             String employeeName,
             Integer serviceId,
-            String serviceName
+            String serviceName,
+            Integer optionId,
+            String optionName
+    ) {
+    }
+
+    public record EmployeeAssignmentsRequest(
+            @NotNull Set<Integer> optionIds
     ) {
     }
 

@@ -12,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,27 +31,33 @@ public class EmployeeController {
     public ApiResponse<List<EmployeeDtos.EmployeeResponse>> getEmployees() {
         return ApiResponse.success("Employees listed", employeeManagementService.getAllEmployees()
                 .stream()
-                .map(DtoMapper::toEmployeeResponse)
+                .map(this::toEmployeeResponse)
                 .toList());
     }
 
     @PostMapping
+    @Transactional
     public ApiResponse<EmployeeDtos.EmployeeResponse> createEmployee(@Valid @RequestBody EmployeeDtos.EmployeeRequest request) {
         Employee employee = toEmployee(request);
-        return ApiResponse.success("Employee created", DtoMapper.toEmployeeResponse(employeeManagementService.create(employee)));
+        Employee saved = employeeManagementService.create(employee);
+        employeeServiceAssignmentService.replaceOptionAssignments(saved.getEmployeeId(), request.optionIds());
+        return ApiResponse.success("Employee created", toEmployeeResponse(saved));
     }
 
     @PutMapping("/{employeeId}")
+    @Transactional
     public ApiResponse<EmployeeDtos.EmployeeResponse> updateEmployee(
             @PathVariable String employeeId,
             @Valid @RequestBody EmployeeDtos.EmployeeRequest request
     ) {
-        return ApiResponse.success("Employee updated", DtoMapper.toEmployeeResponse(employeeManagementService.update(employeeId, toEmployee(request))));
+        Employee saved = employeeManagementService.update(employeeId, toEmployee(request));
+        employeeServiceAssignmentService.replaceOptionAssignments(employeeId, request.optionIds());
+        return ApiResponse.success("Employee updated", toEmployeeResponse(saved));
     }
 
     @DeleteMapping("/{employeeId}")
     public ApiResponse<EmployeeDtos.EmployeeResponse> deactivateEmployee(@PathVariable String employeeId) {
-        return ApiResponse.success("Employee deactivated", DtoMapper.toEmployeeResponse(employeeManagementService.deactivate(employeeId)));
+        return ApiResponse.success("Personel geçmiş randevuları korunarak pasifleştirildi", toEmployeeResponse(employeeManagementService.deactivate(employeeId)));
     }
 
     @PostMapping("/services")
@@ -60,10 +67,21 @@ public class EmployeeController {
         ));
     }
 
-    @GetMapping("/services/{serviceId}")
-    public ApiResponse<List<EmployeeDtos.EmployeeServiceResponse>> getEmployeesByService(@PathVariable Integer serviceId) {
-        return ApiResponse.success("Employees by service listed", employeeServiceAssignmentService.getEmployeesByService(serviceId)
+    @GetMapping("/{employeeId}/services")
+    public ApiResponse<List<EmployeeDtos.EmployeeServiceResponse>> getEmployeeServices(@PathVariable String employeeId) {
+        return ApiResponse.success("Employee services listed", employeeServiceAssignmentService.getAssignments(employeeId)
                 .stream()
+                .map(DtoMapper::toEmployeeServiceResponse)
+                .toList());
+    }
+
+    @PutMapping("/{employeeId}/services")
+    public ApiResponse<List<EmployeeDtos.EmployeeServiceResponse>> replaceEmployeeServices(
+            @PathVariable String employeeId,
+            @Valid @RequestBody EmployeeDtos.EmployeeAssignmentsRequest request
+    ) {
+        return ApiResponse.success("Employee services updated", employeeServiceAssignmentService
+                .replaceOptionAssignments(employeeId, request.optionIds()).stream()
                 .map(DtoMapper::toEmployeeServiceResponse)
                 .toList());
     }
@@ -99,5 +117,10 @@ public class EmployeeController {
                 .email(request.email())
                 .active(request.active() == null || request.active())
                 .build();
+    }
+
+    private EmployeeDtos.EmployeeResponse toEmployeeResponse(Employee employee) {
+        return DtoMapper.toEmployeeResponse(employee,
+                employeeServiceAssignmentService.getAssignments(employee.getEmployeeId()));
     }
 }

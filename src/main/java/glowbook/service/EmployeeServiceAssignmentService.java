@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 
 @Service
 @RequiredArgsConstructor
@@ -19,13 +21,37 @@ public class EmployeeServiceAssignmentService {
     private final EmployeeManagementService employeeManagementService;
     private final ServiceCatalogService serviceCatalogService;
 
+    private final ServiceOptionService serviceOptionService;
+
     public List<EmployeeService> getEmployeesByService(Integer serviceId) {
+        serviceCatalogService.getActiveById(serviceId);
         return employeeServiceRepository.findByServiceServiceIdAndEmployeeActiveTrue(serviceId);
+    }
+
+    public List<EmployeeService> getEmployeesByServiceOption(Integer serviceId, Integer optionId) {
+        serviceOptionService.getActiveByService(serviceId, optionId);
+        return employeeServiceRepository.findQualifiedActiveEmployees(serviceId, optionId).stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        item -> item.getEmployee().getEmployeeId(),
+                        item -> item,
+                        (first, ignored) -> first,
+                        java.util.LinkedHashMap::new
+                ))
+                .values().stream().toList();
+    }
+
+    public List<EmployeeService> getAssignments(String employeeId) {
+        employeeManagementService.getById(employeeId);
+        return employeeServiceRepository.findByEmployeeEmployeeIdOrderByServiceServiceNameAsc(employeeId);
     }
 
     public EmployeeService getById(Integer employeeServiceId) {
         return employeeServiceRepository.findById(employeeServiceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Employee service assignment not found: " + employeeServiceId));
+    }
+
+    public boolean employeeCanProvideServiceOption(String employeeId, Integer serviceId, Integer optionId) {
+        return employeeServiceRepository.employeeCanProvideOption(employeeId, serviceId, optionId);
     }
 
     public boolean employeeCanProvideService(String employeeId, Integer serviceId) {
@@ -44,6 +70,25 @@ public class EmployeeServiceAssignmentService {
                 .build();
 
         return employeeServiceRepository.save(employeeService);
+    }
+
+    @Transactional
+    public List<EmployeeService> replaceOptionAssignments(String employeeId, Collection<Integer> optionIds) {
+        var employee = employeeManagementService.getById(employeeId);
+        var uniqueOptionIds = new LinkedHashSet<>(optionIds == null ? List.of() : optionIds);
+        var options = uniqueOptionIds.stream()
+                .map(serviceOptionService::getActiveById)
+                .toList();
+
+        employeeServiceRepository.deleteByEmployeeEmployeeId(employeeId);
+        employeeServiceRepository.flush();
+        return options.stream()
+                .map(option -> employeeServiceRepository.save(EmployeeService.builder()
+                        .employee(employee)
+                        .service(option.getService())
+                        .serviceOption(option)
+                        .build()))
+                .toList();
     }
 
     @Transactional

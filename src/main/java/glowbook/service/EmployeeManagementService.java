@@ -2,6 +2,7 @@ package glowbook.service;
 
 import glowbook.entity.Employee;
 import glowbook.exception.ResourceNotFoundException;
+import glowbook.exception.BusinessException;
 import glowbook.repository.EmployeeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -44,6 +45,9 @@ public class EmployeeManagementService {
 
     @Transactional
     public Employee create(Employee employee) {
+        if (employee.getPassword() == null || employee.getPassword().isBlank()) {
+            throw new BusinessException("Yeni personel için şifre zorunludur.");
+        }
         employee.setPassword(encodePasswordIfNeeded(employee.getPassword()));
         return employeeRepository.save(employee);
     }
@@ -54,7 +58,9 @@ public class EmployeeManagementService {
 
         employee.setFirstName(request.getFirstName());
         employee.setLastName(request.getLastName());
-        employee.setPassword(encodePasswordIfNeeded(request.getPassword()));
+        if (request.getPassword() != null && !request.getPassword().isBlank()) {
+            employee.setPassword(encodePasswordIfNeeded(request.getPassword()));
+        }
         employee.setPhone(request.getPhone());
         employee.setEmail(request.getEmail());
         employee.setActive(request.getActive());

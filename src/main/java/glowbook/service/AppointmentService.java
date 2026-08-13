@@ -77,14 +77,15 @@ public class AppointmentService {
         glowbook.entity.Service service = serviceCatalogService.getActiveById(request.getService().getServiceId());
         ServiceOption option = serviceOptionService.getActiveByService(service.getServiceId(), request.getServiceOption().getOptionId());
 
+        assertEmployeeQualification(employee.getEmployeeId(), service.getServiceId(), option.getOptionId());
         appointmentAlgorithmService.validateSlot(
                 employee.getEmployeeId(),
                 service.getServiceId(),
+                option.getOptionId(),
                 request.getAppointmentDate(),
                 request.getAppointmentTime()
         );
-        validateAvailability(employee.getEmployeeId(), service.getServiceId(), request);
-
+        validateAvailability(employee.getEmployeeId(), request);
         Customer customer = resolveCustomer(request);
         CustomerPackage customerPackage = resolveAndUseCustomerPackage(request, customer, service.getServiceId());
 
@@ -114,6 +115,11 @@ public class AppointmentService {
     public Appointment approve(Integer appointmentId) {
         Appointment appointment = getById(appointmentId);
         ensureNotCancelled(appointment);
+        employeeManagementService.getActiveById(appointment.getEmployee().getEmployeeId());
+        assertEmployeeQualification(
+                appointment.getEmployee().getEmployeeId(),
+                appointment.getService().getServiceId(),
+                appointment.getServiceOption().getOptionId());
         appointment.setStatus(AppointmentStatus.APPROVED);
         Appointment savedAppointment = appointmentRepository.save(appointment);
         notificationService.createAndSendSmsSafely(
@@ -174,7 +180,6 @@ public class AppointmentService {
 
         validateAvailability(
                 appointment.getEmployee().getEmployeeId(),
-                appointment.getService().getServiceId(),
                 availabilityRequest
         );
 
@@ -184,11 +189,13 @@ public class AppointmentService {
         return appointmentRepository.save(appointment);
     }
 
-    private void validateAvailability(String employeeId, Integer serviceId, Appointment request) {
-        if (!employeeServiceAssignmentService.employeeCanProvideService(employeeId, serviceId)) {
-            throw new BusinessException("Employee cannot provide selected service");
+    private void assertEmployeeQualification(String employeeId, Integer serviceId, Integer optionId) {
+        if (!employeeServiceAssignmentService.employeeCanProvideServiceOption(employeeId, serviceId, optionId)) {
+            throw new BusinessException("Seçilen personel bu hizmeti vermiyor.");
         }
+    }
 
+    private void validateAvailability(String employeeId, Appointment request) {
         if (holidayService.isHoliday(request.getAppointmentDate())) {
             throw new BusinessException("Appointments cannot be created on holidays");
         }
