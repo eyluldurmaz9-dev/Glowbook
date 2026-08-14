@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -22,10 +23,13 @@ public class CustomerPackageService {
     private final CustomerPackageRepository customerPackageRepository;
     private final CustomerService customerService;
     private final ServicePackageService servicePackageService;
+    private final PackageSessionAccountingService packageSessionAccountingService;
+    private final Clock businessClock;
 
     public List<CustomerPackage> getActivePackagesByCustomer(Integer customerId) {
+        LocalDate today = LocalDate.now(businessClock);
         return customerPackageRepository.findByCustomerCustomerIdAndActiveTrueOrderByPurchaseDateDesc(customerId)
-                .stream().filter(item -> item.getValidUntil() == null || !item.getValidUntil().isBefore(LocalDate.now())).toList();
+                .stream().filter(item -> item.getValidUntil() == null || !item.getValidUntil().isBefore(today)).toList();
     }
 
     public CustomerPackage getById(Integer customerPackageId) {
@@ -38,6 +42,10 @@ public class CustomerPackageService {
                 .orElseThrow(() -> new ResourceNotFoundException("Active customer package not found: " + customerPackageId));
     }
 
+    public PackageSessionAccounting accountingOf(CustomerPackage customerPackage) {
+        return packageSessionAccountingService.calculate(customerPackage);
+    }
+
     @Transactional
     public CustomerPackage purchase(Integer customerId, Integer packageId) {
         Customer customer = customerService.getByIdForPackagePurchase(customerId);
@@ -47,13 +55,14 @@ public class CustomerPackageService {
             throw new ConflictException("Customer already owns an active copy of this package");
         }
 
+        LocalDate today = LocalDate.now(businessClock);
         CustomerPackage customerPackage = CustomerPackage.builder()
                 .customer(customer)
                 .servicePackage(servicePackage)
                 .remainingSession(servicePackage.getTotalSession())
                 .purchasePrice(servicePackage.getPrice())
-                .purchaseDate(LocalDate.now())
-                .validUntil(LocalDate.now().plusDays(effectiveValidityDays(servicePackage)))
+                .purchaseDate(today)
+                .validUntil(today.plusDays(effectiveValidityDays(servicePackage)))
                 .active(true)
                 .build();
 
@@ -73,38 +82,42 @@ public class CustomerPackageService {
         return customerPackageRepository.save(customerPackage);
     }
 
+    /**
+     * Validates that the package may back one more appointment for the given service.
+     *
+     * <p>Deliberately does <b>not</b> decrement anything: the session is consumed by the
+     * existence of the appointment row itself. {@link #synchronize(CustomerPackage)} writes
+     * the derived remaining value once the appointment has been persisted, which makes
+     * double subtraction and double restoration structurally impossible.</p>
+     */
     @Transactional
-    public CustomerPackage useSession(Integer customerPackageId, Integer customerId, Integer serviceId) {
+    public CustomerPackage reserveSession(Integer customerPackageId, Integer customerId, Integer serviceId) {
         CustomerPackage customerPackage = getActiveByCustomer(customerPackageId, customerId);
 
         if (!customerPackage.getServicePackage().getService().getServiceId().equals(serviceId)) {
-            throw new BusinessException("Customer package is not valid for selected service");
+            throw new BusinessException("Seçilen paket bu hizmet için geçerli değil.");
         }
 
-        if (customerPackage.getRemainingSession() <= 0) {
-            throw new BusinessException("Customer package has no remaining session");
-        }
-
-        if (customerPackage.getValidUntil() != null && customerPackage.getValidUntil().isBefore(LocalDate.now())) {
+        if (customerPackage.getValidUntil() != null
+                && customerPackage.getValidUntil().isBefore(LocalDate.now(businessClock))) {
             customerPackage.setActive(false);
             customerPackageRepository.save(customerPackage);
-            throw new BusinessException("Customer package has expired");
+            throw new BusinessException("Paketinin geçerlilik süresi dolmuş.");
         }
 
-        customerPackage.setRemainingSession(customerPackage.getRemainingSession() - 1);
-        if (customerPackage.getRemainingSession() == 0) {
-            customerPackage.setActive(false);
+        if (!packageSessionAccountingService.calculate(customerPackage).hasBookableSession()) {
+            throw new BusinessException("Paketinde planlanabilir seans kalmadı.");
         }
 
-        return customerPackageRepository.save(customerPackage);
+        return customerPackage;
     }
 
+    /**
+     * Recomputes and stores the package's remaining session count from its appointments.
+     */
     @Transactional
-    public CustomerPackage restoreSession(Integer customerPackageId) {
-        CustomerPackage customerPackage = getById(customerPackageId);
-        customerPackage.setRemainingSession(customerPackage.getRemainingSession() + 1);
-        customerPackage.setActive(true);
-        return customerPackageRepository.save(customerPackage);
+    public PackageSessionAccounting synchronize(CustomerPackage customerPackage) {
+        return packageSessionAccountingService.synchronize(customerPackage);
     }
 
     @Transactional

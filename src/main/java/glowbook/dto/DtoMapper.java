@@ -1,6 +1,8 @@
 package glowbook.dto;
 
 import glowbook.entity.*;
+import glowbook.service.PackageSessionAccounting;
+
 import java.util.List;
 
 public final class DtoMapper {
@@ -71,15 +73,21 @@ public final class DtoMapper {
         );
     }
 
-    public static CustomerDtos.CustomerPackageResponse toCustomerPackageResponse(CustomerPackage customerPackage) {
+    public static CustomerDtos.CustomerPackageResponse toCustomerPackageResponse(
+            CustomerPackage customerPackage,
+            PackageSessionAccounting accounting
+    ) {
         return new CustomerDtos.CustomerPackageResponse(
                 customerPackage.getCustomerPackageId(),
                 customerPackage.getCustomer().getCustomerId(),
                 customerPackage.getServicePackage().getPackageId(),
                 customerPackage.getServicePackage().getPackageName(),
                 customerPackage.getServicePackage().getService().getServiceName(),
-                customerPackage.getServicePackage().getTotalSession(),
-                customerPackage.getRemainingSession(),
+                customerPackage.getServicePackage().getService().getServiceId(),
+                accounting.total(),
+                accounting.used(),
+                accounting.scheduled(),
+                accounting.remaining(),
                 customerPackage.getPurchasePrice(),
                 customerPackage.getPurchaseDate(),
                 customerPackage.getValidUntil(),

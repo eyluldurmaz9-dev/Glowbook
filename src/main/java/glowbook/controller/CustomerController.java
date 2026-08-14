@@ -4,9 +4,13 @@ import glowbook.dto.ApiResponse;
 import glowbook.dto.CustomerDtos;
 import glowbook.dto.DtoMapper;
 import glowbook.entity.Customer;
+import glowbook.entity.CustomerPackage;
 import glowbook.security.AuthorizationSupport;
 import glowbook.service.CustomerPackageService;
 import glowbook.service.CustomerService;
+import glowbook.service.PackageBookingService;
+import glowbook.service.PackageSessionAccounting;
+import glowbook.service.PackageSessionAccountingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -14,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api")
@@ -22,6 +27,8 @@ public class CustomerController {
 
     private final CustomerService customerService;
     private final CustomerPackageService customerPackageService;
+    private final PackageBookingService packageBookingService;
+    private final PackageSessionAccountingService packageSessionAccountingService;
     private final AuthorizationSupport authorizationSupport;
 
     @GetMapping("/admin/customers")
@@ -67,17 +74,60 @@ public class CustomerController {
             Authentication authentication
     ) {
         authorizationSupport.assertCustomerCanAccess(customerId, authentication);
-        return ApiResponse.success("Package purchased", DtoMapper.toCustomerPackageResponse(customerPackageService.purchase(customerId, packageId)));
+        CustomerPackage customerPackage = customerPackageService.purchase(customerId, packageId);
+        return ApiResponse.success("Package purchased", toResponse(customerPackage));
+    }
+
+    /**
+     * Buys the package and books its first appointment atomically. The service is derived
+     * from the package, so the customer is never asked to pick it a second time.
+     */
+    @PostMapping("/customers/{customerId}/packages/{packageId}/booking")
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN','EMPLOYEE')")
+    public ApiResponse<CustomerDtos.PackageBookingResponse> purchasePackageWithFirstAppointment(
+            @PathVariable Integer customerId,
+            @PathVariable Integer packageId,
+            @Valid @RequestBody CustomerDtos.PackageBookingRequest request,
+            Authentication authentication
+    ) {
+        authorizationSupport.assertCustomerCanAccess(customerId, authentication);
+        PackageBookingService.PackageBookingOutcome outcome = packageBookingService.purchaseAndBookFirstAppointment(
+                new PackageBookingService.PackageBookingCommand(
+                        customerId,
+                        packageId,
+                        request.employeeId(),
+                        request.optionId(),
+                        request.appointmentDate(),
+                        request.appointmentTime()
+                )
+        );
+        return ApiResponse.success("Package purchased with first appointment",
+                new CustomerDtos.PackageBookingResponse(
+                        DtoMapper.toCustomerPackageResponse(outcome.customerPackage(), outcome.accounting()),
+                        DtoMapper.toAppointmentResponse(outcome.appointment())
+                ));
     }
 
     @GetMapping("/customers/{customerId}/packages")
     @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN','EMPLOYEE')")
     public ApiResponse<List<CustomerDtos.CustomerPackageResponse>> getCustomerPackages(@PathVariable Integer customerId, Authentication authentication) {
         authorizationSupport.assertCustomerCanAccess(customerId, authentication);
-        return ApiResponse.success("Customer packages listed", customerPackageService.getActivePackagesByCustomer(customerId)
+        List<CustomerPackage> packages = customerPackageService.getActivePackagesByCustomer(customerId);
+        Map<Integer, PackageSessionAccounting> accounting =
+                packageSessionAccountingService.calculateAll(packages);
+        return ApiResponse.success("Customer packages listed", packages
                 .stream()
-                .map(DtoMapper::toCustomerPackageResponse)
+                .map(item -> DtoMapper.toCustomerPackageResponse(
+                        item,
+                        accounting.getOrDefault(item.getCustomerPackageId(),
+                                PackageSessionAccounting.of(0, 0, 0))))
                 .toList());
     }
 
+    private CustomerDtos.CustomerPackageResponse toResponse(CustomerPackage customerPackage) {
+        return DtoMapper.toCustomerPackageResponse(
+                customerPackage,
+                packageSessionAccountingService.calculate(customerPackage)
+        );
+    }
 }

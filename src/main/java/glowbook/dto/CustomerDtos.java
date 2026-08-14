@@ -1,9 +1,11 @@
 package glowbook.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 public final class CustomerDtos {
 
@@ -31,18 +33,39 @@ public final class CustomerDtos {
     ) {
     }
 
+    /**
+     * {@code totalSession}/{@code usedSession}/{@code scheduledSession}/{@code remainingSession}
+     * come from the single derived accounting rule; see docs/PACKAGE_SESSION_ACCOUNTING.md.
+     */
     public record CustomerPackageResponse(
             Integer customerPackageId,
             Integer customerId,
             Integer packageId,
             String packageName,
             String serviceName,
+            Integer serviceId,
             Integer totalSession,
+            Integer usedSession,
+            Integer scheduledSession,
             Integer remainingSession,
             Double purchasePrice,
             LocalDate purchaseDate,
             LocalDate validUntil,
             Boolean active
+    ) {
+    }
+
+    public record PackageBookingRequest(
+            @NotBlank String employeeId,
+            Integer optionId,
+            @NotNull LocalDate appointmentDate,
+            @NotNull LocalTime appointmentTime
+    ) {
+    }
+
+    public record PackageBookingResponse(
+            CustomerPackageResponse customerPackage,
+            AppointmentDtos.AppointmentResponse appointment
     ) {
     }
 }

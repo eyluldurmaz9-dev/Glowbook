@@ -13,6 +13,7 @@ import glowbook.exception.ResourceNotFoundException;
 import glowbook.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
@@ -41,7 +42,9 @@ public class AppointmentService {
     private final EmployeeLeaveService employeeLeaveService;
     private final HolidayService holidayService;
     private final AppointmentAlgorithmService appointmentAlgorithmService;
-    private final NotificationService notificationService;
+    private final AppointmentTimeClassifier appointmentTimeClassifier;
+    private final TurkishPhoneNumberService phoneNumberService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public Appointment getById(Integer appointmentId) {
         return appointmentRepository.findById(appointmentId)
@@ -58,17 +61,17 @@ public class AppointmentService {
     }
 
     public List<Appointment> getUpcomingCustomerAppointments(Integer customerId, LocalDate fromDate) {
-        return appointmentRepository.findByCustomerCustomerIdAndAppointmentDateGreaterThanEqualOrderByAppointmentDateAscAppointmentTimeAsc(
-                customerId,
-                fromDate
-        );
+        return appointmentRepository.findByCustomerCustomerIdOrderByAppointmentDateAscAppointmentTimeAsc(customerId)
+                .stream().filter(appointmentTimeClassifier::isUpcoming).toList();
     }
 
     public List<Appointment> getPastCustomerAppointments(Integer customerId, LocalDate beforeDate) {
-        return appointmentRepository.findByCustomerCustomerIdAndAppointmentDateLessThanOrderByAppointmentDateDescAppointmentTimeDesc(
-                customerId,
-                beforeDate
-        );
+        return appointmentRepository.findByCustomerCustomerIdOrderByAppointmentDateAscAppointmentTimeAsc(customerId)
+                .stream().filter(appointmentTimeClassifier::isPast)
+                .sorted((left, right) -> {
+                    int date = right.getAppointmentDate().compareTo(left.getAppointmentDate());
+                    return date != 0 ? date : right.getAppointmentTime().compareTo(left.getAppointmentTime());
+                }).toList();
     }
 
     @Transactional
@@ -87,6 +90,7 @@ public class AppointmentService {
         );
         validateAvailability(employee.getEmployeeId(), request);
         Customer customer = resolveCustomer(request);
+        request.setPhone(phoneNumberService.normalize(request.getPhone()));
         CustomerPackage customerPackage = resolveAndUseCustomerPackage(request, customer, service.getServiceId());
 
         request.setEmployee(employee);
@@ -100,14 +104,12 @@ public class AppointmentService {
         }
 
         Appointment appointment = appointmentRepository.save(request);
-        notificationService.createAndSendSmsSafely(
-                appointment.getCustomer(),
-                appointment,
-                NotificationType.APPOINTMENT_CREATED,
-                "Randevu olusturuldu",
-                "GlowBook randevunuz olusturuldu: " + appointment.getAppointmentDate() + " " + appointment.getAppointmentTime(),
-                appointment.getPhone()
-        );
+        if (customerPackage != null) {
+            // The saved appointment now backs exactly one session; recompute the stored counter.
+            customerPackageService.synchronize(customerPackage);
+        }
+        publishSms(appointment, NotificationType.APPOINTMENT_CREATED, "Randevu oluşturuldu",
+                appointmentMessage("Randevunuz oluşturuldu", appointment));
         return appointment;
     }
 
@@ -122,14 +124,8 @@ public class AppointmentService {
                 appointment.getServiceOption().getOptionId());
         appointment.setStatus(AppointmentStatus.APPROVED);
         Appointment savedAppointment = appointmentRepository.save(appointment);
-        notificationService.createAndSendSmsSafely(
-                savedAppointment.getCustomer(),
-                savedAppointment,
-                NotificationType.APPOINTMENT_APPROVED,
-                "Randevu onaylandi",
-                "GlowBook randevunuz onaylandi: " + savedAppointment.getAppointmentDate() + " " + savedAppointment.getAppointmentTime(),
-                savedAppointment.getPhone()
-        );
+        publishSms(savedAppointment, NotificationType.APPOINTMENT_APPROVED, "Randevu onaylandı",
+                appointmentMessage("Randevunuz onaylandı", savedAppointment));
         return savedAppointment;
     }
 
@@ -149,22 +145,16 @@ public class AppointmentService {
             return appointment;
         }
 
-        if (appointment.getCustomerPackage() != null) {
-            customerPackageService.restoreSession(appointment.getCustomerPackage().getCustomerPackageId());
-        }
-
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment.setCancellationReason(cancellationReason);
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
-        notificationService.createAndSendSmsSafely(
-                savedAppointment.getCustomer(),
-                savedAppointment,
-                NotificationType.APPOINTMENT_CANCELLED,
-                "Randevu iptal edildi",
-                "GlowBook randevunuz iptal edildi: " + savedAppointment.getAppointmentDate() + " " + savedAppointment.getAppointmentTime(),
-                savedAppointment.getPhone()
-        );
+        if (savedAppointment.getCustomerPackage() != null) {
+            // Cancelling releases the session; the recomputation cannot restore it twice.
+            customerPackageService.synchronize(savedAppointment.getCustomerPackage());
+        }
+        publishSms(savedAppointment, NotificationType.APPOINTMENT_CANCELLED, "Randevu iptal edildi",
+                appointmentMessage("Randevunuz iptal edildi", savedAppointment));
         return savedAppointment;
     }
 
@@ -186,7 +176,10 @@ public class AppointmentService {
         appointment.setAppointmentDate(request.getAppointmentDate());
         appointment.setAppointmentTime(request.getAppointmentTime());
 
-        return appointmentRepository.save(appointment);
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        publishSms(savedAppointment, NotificationType.APPOINTMENT_UPDATED, "Randevu değiştirildi",
+                appointmentMessage("Randevunuz değiştirildi", savedAppointment));
+        return savedAppointment;
     }
 
     private void assertEmployeeQualification(String employeeId, Integer serviceId, Integer optionId) {
@@ -261,10 +254,10 @@ public class AppointmentService {
         }
 
         if (customer == null) {
-            throw new BusinessException("Customer is required when using a package");
+            throw new BusinessException("Paket kullanmak için üye girişi yapmalısın.");
         }
 
-        return customerPackageService.useSession(
+        return customerPackageService.reserveSession(
                 request.getCustomerPackage().getCustomerPackageId(),
                 customer.getCustomerId(),
                 serviceId
@@ -275,5 +268,18 @@ public class AppointmentService {
         if (AppointmentStatus.CANCELLED.equals(appointment.getStatus())) {
             throw new BusinessException("Cancelled appointment cannot be changed");
         }
+    }
+
+    private void publishSms(Appointment appointment, NotificationType type, String title, String message) {
+        eventPublisher.publishEvent(new AppointmentSmsEvent(
+                appointment.getAppointmentId(), type, title, message, appointment.getPhone()));
+    }
+
+    private String appointmentMessage(String action, Appointment appointment) {
+        String serviceName = appointment.getService() == null ? "" : ", " + appointment.getService().getServiceName();
+        String employeeName = appointment.getEmployee() == null ? "" : ", "
+                + appointment.getEmployee().getFirstName() + " " + appointment.getEmployee().getLastName();
+        return "GlowBook: " + action + ". " + appointment.getAppointmentDate() + " "
+                + appointment.getAppointmentTime() + serviceName + employeeName + ". Görüşmek üzere.";
     }
 }
