@@ -6,11 +6,13 @@ import glowbook.entity.Notification;
 import glowbook.entity.NotificationType;
 import glowbook.exception.ResourceNotFoundException;
 import glowbook.repository.NotificationRepository;
+import glowbook.repository.AppointmentRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,6 +26,8 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final SmsSender smsSender;
+    private final AppointmentRepository appointmentRepository;
+    private final TurkishPhoneNumberService phoneNumberService;
 
     public List<Notification> getCustomerNotifications(Integer customerId) {
         return notificationRepository.findByCustomerCustomerIdOrderByCreatedAtDesc(customerId);
@@ -85,6 +89,23 @@ public class NotificationService {
         } catch (RuntimeException exception) {
             LOGGER.warn("Notification could not be saved for appointment {}: {}", appointment == null ? null : appointment.getAppointmentId(), exception.getMessage());
         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void createAndSendAfterCommit(AppointmentSmsEvent event) {
+        Appointment appointment = appointmentRepository.findById(event.appointmentId()).orElse(null);
+        if (appointment == null || appointmentNotificationExists(event.appointmentId(), event.type())) {
+            return;
+        }
+        Notification notification = create(appointment.getCustomer(), appointment, event.type(), event.title(), event.message());
+        try {
+            smsSender.sendSms(phoneNumberService.normalize(event.phone()), event.message());
+            notification.setSmsSent(true);
+        } catch (RuntimeException exception) {
+            LOGGER.warn("SMS delivery failed for appointment {}", event.appointmentId());
+            notification.setSmsSent(false);
+        }
+        notificationRepository.save(notification);
     }
 
     @Transactional

@@ -75,7 +75,7 @@ class AppointmentControllerIntegrationTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.data.customerId").doesNotExist())
                 .andExpect(jsonPath("$.data.customerName").value("Guest"))
-                .andExpect(jsonPath("$.data.phone").value("05551234567"))
+                .andExpect(jsonPath("$.data.phone").value("+905551234567"))
                 .andExpect(jsonPath("$.data.price").isNumber());
     }
 
