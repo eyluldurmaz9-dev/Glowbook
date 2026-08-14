@@ -44,6 +44,7 @@ class EmployeeCompetencyIntegrationTest {
     @Autowired EmployeeServiceRepository employeeServiceRepository;
     @Autowired ServiceOptionRepository serviceOptionRepository;
     @Autowired AppointmentRepository appointmentRepository;
+    @Autowired glowbook.repository.NotificationRepository notificationRepository;
 
     private String adminToken;
     private String customerToken;
@@ -64,6 +65,7 @@ class EmployeeCompetencyIntegrationTest {
         serviceId = entry.getKey();
         firstOptionId = entry.getValue().get(0).getOptionId();
         secondOptionId = entry.getValue().get(1).getOptionId();
+        notificationRepository.deleteAll();
         appointmentRepository.deleteAll();
         employeeServiceRepository.deleteByEmployeeEmployeeId("COMPTEST");
         employeeRepository.deleteById("COMPTEST");
