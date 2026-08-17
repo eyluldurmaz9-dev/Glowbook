@@ -55,6 +55,10 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index.html", "/app.js", "/styles.css", "/favicon.ico").permitAll()
                         .requestMatchers("/actuator/health", "/health").permitAll()
                         .requestMatchers("/api/auth/**", "/api/catalog/**").permitAll()
+                        // Meta calls this directly and never carries a GlowBook session/JWT;
+                        // it authenticates itself via hub.verify_token (GET) and an
+                        // X-Hub-Signature-256 HMAC (POST) inside the controller instead.
+                        .requestMatchers("/api/whatsapp/webhook").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/appointments/available-slots").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/admin/employees").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/admin/employees/services/**").permitAll()
