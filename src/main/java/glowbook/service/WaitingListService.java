@@ -34,7 +34,7 @@ public class WaitingListService {
 
     public WaitingList getById(Integer waitingListId) {
         return waitingListRepository.findById(waitingListId)
-                .orElseThrow(() -> new ResourceNotFoundException("Waiting list record not found: " + waitingListId));
+                .orElseThrow(() -> new ResourceNotFoundException("Bekleme listesi kaydı bulunamadı."));
     }
 
     @Transactional
@@ -118,7 +118,7 @@ public class WaitingListService {
 
     private void requireGuestInfo(WaitingList request) {
         if (isBlank(request.getCustomerName()) || isBlank(request.getCustomerSurname()) || isBlank(request.getPhone())) {
-            throw new BusinessException("Customer name, surname and phone are required for guest waiting list records");
+            throw new BusinessException("Misafir bekleme listesi kaydı için ad, soyad ve telefon numarası gereklidir.");
         }
     }
 

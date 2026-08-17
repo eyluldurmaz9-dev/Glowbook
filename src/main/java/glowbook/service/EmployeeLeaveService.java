@@ -29,13 +29,13 @@ public class EmployeeLeaveService {
 
     public EmployeeLeave getById(Integer leaveId) {
         return employeeLeaveRepository.findById(leaveId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee leave not found: " + leaveId));
+                .orElseThrow(() -> new ResourceNotFoundException("İzin kaydı bulunamadı."));
     }
 
     @Transactional
     public EmployeeLeave create(String employeeId, EmployeeLeave employeeLeave) {
         if (isEmployeeOnLeave(employeeId, employeeLeave.getLeaveDate())) {
-            throw new BusinessException("Employee already has leave on date: " + employeeLeave.getLeaveDate());
+            throw new BusinessException("Bu personelin seçilen tarihte zaten izni var.");
         }
 
         employeeLeave.setEmployee(employeeManagementService.getActiveById(employeeId));

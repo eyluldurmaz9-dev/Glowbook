@@ -14,12 +14,12 @@ public final class WaitingListDtos {
 
     public record WaitingListRequest(
             Integer customerId,
-            @NotNull Integer serviceId,
-            @NotNull Integer optionId,
+            @NotNull(message = "Hizmet seçilmelidir.") Integer serviceId,
+            @NotNull(message = "Alt hizmet seçilmelidir.") Integer optionId,
             String customerName,
             String customerSurname,
             String phone,
-            @NotNull LocalDate preferredDate,
+            @NotNull(message = "Tercih edilen tarih seçilmelidir.") LocalDate preferredDate,
             LocalTime preferredStartTime,
             LocalTime preferredEndTime
     ) {

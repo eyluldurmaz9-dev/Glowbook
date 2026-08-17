@@ -11,4 +11,7 @@ public interface ServiceOptionRepository extends JpaRepository<ServiceOption, In
     List<ServiceOption> findByServiceServiceIdAndActiveTrueOrderByOptionNameAsc(Integer serviceId);
 
     Optional<ServiceOption> findByOptionIdAndServiceServiceIdAndActiveTrue(Integer optionId, Integer serviceId);
+
+    /** Unfiltered by active — a data-cleanup merge must find every row, not just active ones. */
+    List<ServiceOption> findByServiceServiceId(Integer serviceId);
 }

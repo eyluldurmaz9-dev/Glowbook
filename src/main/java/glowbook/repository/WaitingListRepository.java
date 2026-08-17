@@ -18,4 +18,9 @@ public interface WaitingListRepository extends JpaRepository<WaitingList, Intege
             LocalDate preferredDate,
             WaitingListStatus status
     );
+
+    /** Data-cleanup merge finders: re-point every waiting-list row off a duplicate catalog row before it is deleted. */
+    List<WaitingList> findByServiceServiceId(Integer serviceId);
+
+    List<WaitingList> findByServiceOptionOptionId(Integer optionId);
 }

@@ -32,12 +32,12 @@ public class ServicePackageService {
 
     public ServicePackage getById(Integer packageId) {
         return servicePackageRepository.findById(packageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service package not found: " + packageId));
+                .orElseThrow(() -> new ResourceNotFoundException("Paket bulunamadı."));
     }
 
     public ServicePackage getActiveById(Integer packageId) {
         return servicePackageRepository.findByPackageIdAndActiveTrue(packageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active service package not found: " + packageId));
+                .orElseThrow(() -> new ResourceNotFoundException("Aktif paket bulunamadı."));
     }
 
     @Transactional

@@ -13,9 +13,9 @@ public final class EmployeeDtos {
     }
 
     public record EmployeeRequest(
-            @NotBlank String employeeId,
-            @NotBlank String firstName,
-            @NotBlank String lastName,
+            @NotBlank(message = "Personel kimliği boş olamaz.") String employeeId,
+            @NotBlank(message = "Ad boş olamaz.") String firstName,
+            @NotBlank(message = "Soyad boş olamaz.") String lastName,
             String password,
             String phone,
             String email,
@@ -38,8 +38,8 @@ public final class EmployeeDtos {
     }
 
     public record EmployeeServiceRequest(
-            @NotBlank String employeeId,
-            @NotNull Integer serviceId
+            @NotBlank(message = "Personel seçilmelidir.") String employeeId,
+            @NotNull(message = "Hizmet seçilmelidir.") Integer serviceId
     ) {
     }
 
@@ -61,8 +61,8 @@ public final class EmployeeDtos {
     }
 
     public record EmployeeLeaveRequest(
-            @NotBlank String employeeId,
-            @NotNull LocalDate leaveDate,
+            @NotBlank(message = "Personel seçilmelidir.") String employeeId,
+            @NotNull(message = "İzin tarihi seçilmelidir.") LocalDate leaveDate,
             String reason
     ) {
     }

@@ -28,6 +28,11 @@ public interface EmployeeServiceRepository extends JpaRepository<EmployeeService
 
     boolean existsByEmployeeEmployeeIdAndServiceServiceId(String employeeId, Integer serviceId);
 
+    /** Data-cleanup merge finders: re-point every assignment off a duplicate catalog row before it is deleted. */
+    List<EmployeeService> findByServiceServiceId(Integer serviceId);
+
+    List<EmployeeService> findByServiceOptionOptionId(Integer optionId);
+
     @Query("""
             select (count(assignment) > 0) from EmployeeService assignment
             where assignment.employee.employeeId = :employeeId

@@ -50,8 +50,8 @@ public class RefreshTokenService {
     }
 
     public void validate(RefreshToken token) {
-        if (token == null) throw new BusinessException("Invalid refresh token");
-        if (Boolean.TRUE.equals(token.getRevoked())) throw new BusinessException("Refresh token revoked");
-        if (token.getExpiresAt().isBefore(Instant.now())) throw new BusinessException("Refresh token expired");
+        if (token == null) throw new BusinessException("Oturum süren dolmuş olabilir. Lütfen tekrar giriş yap.");
+        if (Boolean.TRUE.equals(token.getRevoked())) throw new BusinessException("Oturum süren dolmuş olabilir. Lütfen tekrar giriş yap.");
+        if (token.getExpiresAt().isBefore(Instant.now())) throw new BusinessException("Oturum süren dolmuş olabilir. Lütfen tekrar giriş yap.");
     }
 }

@@ -75,7 +75,7 @@ public class AppointmentAlgorithmService {
                 .anyMatch(time -> time.equals(appointmentTime));
 
         if (!slotExists) {
-            throw new ConflictException("Selected slot is not available");
+            throw new ConflictException("Bu saat başka bir randevu tarafından dolu. Lütfen başka bir saat seç.");
         }
     }
 

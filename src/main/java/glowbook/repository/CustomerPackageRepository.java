@@ -16,4 +16,7 @@ public interface CustomerPackageRepository extends JpaRepository<CustomerPackage
     );
 
     boolean existsByCustomerCustomerIdAndServicePackagePackageIdAndActiveTrue(Integer customerId, Integer packageId);
+
+    /** Data-cleanup merge finder: re-point every owned copy off a duplicate package row before it is deleted. */
+    List<CustomerPackage> findByServicePackagePackageId(Integer packageId);
 }

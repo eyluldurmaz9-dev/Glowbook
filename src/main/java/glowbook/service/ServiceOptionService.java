@@ -23,19 +23,19 @@ public class ServiceOptionService {
 
     public ServiceOption getById(Integer optionId) {
         return serviceOptionRepository.findById(optionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service option not found: " + optionId));
+                .orElseThrow(() -> new ResourceNotFoundException("Alt hizmet bulunamadı."));
     }
 
     public ServiceOption getActiveByService(Integer serviceId, Integer optionId) {
         return serviceOptionRepository.findByOptionIdAndServiceServiceIdAndActiveTrue(optionId, serviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active option not found: " + optionId));
+                .orElseThrow(() -> new ResourceNotFoundException("Bu alt hizmet artık uygun değil."));
     }
 
     public ServiceOption getActiveById(Integer optionId) {
         ServiceOption option = serviceOptionRepository.findById(optionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service option not found: " + optionId));
+                .orElseThrow(() -> new ResourceNotFoundException("Alt hizmet bulunamadı."));
         if (!Boolean.TRUE.equals(option.getActive()) || !Boolean.TRUE.equals(option.getService().getActive())) {
-            throw new ResourceNotFoundException("Active service option not found: " + optionId);
+            throw new ResourceNotFoundException("Bu alt hizmet artık uygun değil.");
         }
         return option;
     }

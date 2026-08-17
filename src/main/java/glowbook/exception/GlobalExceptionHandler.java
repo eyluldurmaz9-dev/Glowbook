@@ -37,29 +37,33 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException exception) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(ApiResponse.error(exception.getMessage()));
+                .body(ApiResponse.error("Bu işlem için yetkin yok."));
     }
 
+    /**
+     * Every field-level validation message shown here comes from an explicit Turkish
+     * {@code message=} on the DTO's own {@code @NotBlank}/{@code @NotNull}/etc. annotation
+     * (see the DTO classes in {@code glowbook.dto}) — never the raw Java field name and
+     * never Hibernate Validator's built-in English default, both of which used to leak
+     * straight through to the customer on any validation failure.
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException exception) {
         String message = exception.getBindingResult()
                 .getFieldErrors()
                 .stream()
-                .map(this::formatFieldError)
-                .collect(Collectors.joining(", "));
+                .map(FieldError::getDefaultMessage)
+                .distinct()
+                .collect(Collectors.joining(" "));
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(message));
+                .body(ApiResponse.error(message.isBlank() ? "Girdiğin bilgileri kontrol edip tekrar dene." : message));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception exception) {
         log.error("Unhandled API exception", exception);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Unexpected server error"));
-    }
-
-    private String formatFieldError(FieldError fieldError) {
-        return fieldError.getField() + ": " + fieldError.getDefaultMessage();
+                .body(ApiResponse.error("Beklenmedik bir hata oluştu. Lütfen tekrar dene."));
     }
 }

@@ -8,23 +8,23 @@ public final class AuthDtos {
     }
 
     public record LoginRequest(
-            @NotBlank String username,
-            @NotBlank String password,
-            @NotBlank String role
+            @NotBlank(message = "Kullanıcı adı boş olamaz.") String username,
+            @NotBlank(message = "Şifre boş olamaz.") String password,
+            @NotBlank(message = "Rol seçilmelidir.") String role
     ) {
     }
 
     public record RegisterCustomerRequest(
-            @NotBlank String firstName,
-            @NotBlank String lastName,
-            @NotBlank String phone,
-            @NotBlank String password,
+            @NotBlank(message = "Ad boş olamaz.") String firstName,
+            @NotBlank(message = "Soyad boş olamaz.") String lastName,
+            @NotBlank(message = "Telefon numarası boş olamaz.") String phone,
+            @NotBlank(message = "Şifre boş olamaz.") String password,
             String email
     ) {
     }
 
     public record RefreshRequest(
-            @NotBlank String refreshToken
+            @NotBlank(message = "Oturum bilgisi eksik.") String refreshToken
     ) {
     }
 

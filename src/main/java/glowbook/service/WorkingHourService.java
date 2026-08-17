@@ -25,7 +25,7 @@ public class WorkingHourService {
 
     public WorkingHour getByDay(DayOfWeek dayOfWeek) {
         return workingHourRepository.findByDayOfWeek(dayOfWeek)
-                .orElseThrow(() -> new ResourceNotFoundException("Working hour not found for day: " + dayOfWeek));
+                .orElseThrow(() -> new ResourceNotFoundException("Bu gün için çalışma saati bulunamadı."));
     }
 
     public boolean isWorkingTime(DayOfWeek dayOfWeek, LocalTime time) {
@@ -40,7 +40,7 @@ public class WorkingHourService {
     public WorkingHour create(WorkingHour workingHour) {
         workingHourRepository.findByDayOfWeek(workingHour.getDayOfWeek())
                 .ifPresent(existing -> {
-                    throw new BusinessException("Working hour already exists for day: " + workingHour.getDayOfWeek());
+                    throw new BusinessException("Bu gün için çalışma saati zaten tanımlı.");
                 });
         return workingHourRepository.save(workingHour);
     }
@@ -48,7 +48,7 @@ public class WorkingHourService {
     @Transactional
     public WorkingHour update(Integer workingHourId, WorkingHour request) {
         WorkingHour workingHour = workingHourRepository.findById(workingHourId)
-                .orElseThrow(() -> new ResourceNotFoundException("Working hour not found: " + workingHourId));
+                .orElseThrow(() -> new ResourceNotFoundException("Çalışma saati bulunamadı."));
 
         workingHour.setDayOfWeek(request.getDayOfWeek());
         workingHour.setStartTime(request.getStartTime());

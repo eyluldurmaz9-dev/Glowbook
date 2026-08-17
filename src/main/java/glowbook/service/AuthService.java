@@ -56,7 +56,7 @@ public class AuthService {
         try {
             role = UserRole.valueOf(request.role().toUpperCase());
         } catch (IllegalArgumentException exception) {
-            throw new BusinessException("Invalid role");
+            throw new BusinessException("Geçersiz rol seçildi.");
         }
         return switch (role) {
             case CUSTOMER -> loginCustomer(request);
@@ -67,10 +67,10 @@ public class AuthService {
     private AuthDtos.AuthResponse loginCustomer(AuthDtos.LoginRequest request) {
         Customer customer = customerRepository.findByPhone(request.username())
                 .or(() -> customerRepository.findByEmail(request.username()))
-                .orElseThrow(() -> new BusinessException("Invalid phone or password"));
+                .orElseThrow(() -> new BusinessException("Telefon numarası veya şifre hatalı."));
 
         if (!Boolean.TRUE.equals(customer.getActive()) || !passwordMatches(request.password(), customer.getPassword())) {
-            throw new BusinessException("Invalid phone or password");
+            throw new BusinessException("Telefon numarası veya şifre hatalı.");
         }
 
         String token = jwtTokenService.generateToken(String.valueOf(customer.getCustomerId()), UserRole.CUSTOMER);
@@ -118,7 +118,7 @@ public class AuthService {
     @Transactional
     public AuthDtos.AuthResponse refresh(String refreshToken) {
         var opt = refreshTokenService.findByToken(refreshToken);
-        var tokenEntity = opt.orElseThrow(() -> new BusinessException("Invalid refresh token"));
+        var tokenEntity = opt.orElseThrow(() -> new BusinessException("Oturum süren dolmuş olabilir. Lütfen tekrar giriş yap."));
         refreshTokenService.validate(tokenEntity);
 
         String subject = tokenEntity.getSubject();

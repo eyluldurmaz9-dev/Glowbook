@@ -48,7 +48,7 @@ public class AppointmentService {
 
     public Appointment getById(Integer appointmentId) {
         return appointmentRepository.findById(appointmentId)
-                .orElseThrow(() -> new ResourceNotFoundException("Appointment not found: " + appointmentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Randevu bulunamadı."));
     }
 
     public List<Appointment> getEmployeeSchedule(String employeeId, LocalDate startDate, LocalDate endDate) {
@@ -193,15 +193,15 @@ public class AppointmentService {
         appointmentAlgorithmService.validateAppointmentTime(
                 request.getAppointmentDate(), request.getAppointmentTime());
         if (holidayService.isHoliday(request.getAppointmentDate())) {
-            throw new BusinessException("Appointments cannot be created on holidays");
+            throw new BusinessException("Bu tarihte randevu oluşturulamaz, salon tatilde.");
         }
 
         if (employeeLeaveService.isEmployeeOnLeave(employeeId, request.getAppointmentDate())) {
-            throw new BusinessException("Employee is on leave on selected date");
+            throw new BusinessException("Seçilen personel bu tarihte izinli.");
         }
 
         if (!workingHourService.isWorkingTime(request.getAppointmentDate().getDayOfWeek(), request.getAppointmentTime())) {
-            throw new BusinessException("Selected time is outside working hours");
+            throw new BusinessException("Seçilen saat çalışma saatleri dışında.");
         }
 
         boolean occupied = appointmentRepository.existsByEmployeeEmployeeIdAndAppointmentDateAndAppointmentTimeAndStatusIn(
@@ -212,7 +212,7 @@ public class AppointmentService {
         );
 
         if (occupied) {
-            throw new ConflictException("Selected appointment time is already occupied");
+            throw new ConflictException("Bu saat başka bir randevu tarafından dolu. Lütfen başka bir saat seç.");
         }
     }
 
@@ -241,7 +241,7 @@ public class AppointmentService {
 
     private void requireGuestInfo(Appointment request) {
         if (isBlank(request.getCustomerName()) || isBlank(request.getCustomerSurname()) || isBlank(request.getPhone())) {
-            throw new BusinessException("Customer name, surname and phone are required for guest appointments");
+            throw new BusinessException("Misafir randevusu için ad, soyad ve telefon numarası gereklidir.");
         }
     }
 
@@ -269,7 +269,7 @@ public class AppointmentService {
 
     private void ensureNotCancelled(Appointment appointment) {
         if (AppointmentStatus.CANCELLED.equals(appointment.getStatus())) {
-            throw new BusinessException("Cancelled appointment cannot be changed");
+            throw new BusinessException("İptal edilmiş bir randevu değiştirilemez.");
         }
     }
 

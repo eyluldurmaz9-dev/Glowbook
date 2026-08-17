@@ -47,7 +47,7 @@ public class EmployeeServiceAssignmentService {
 
     public EmployeeService getById(Integer employeeServiceId) {
         return employeeServiceRepository.findById(employeeServiceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee service assignment not found: " + employeeServiceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Personel görev ataması bulunamadı."));
     }
 
     public boolean employeeCanProvideServiceOption(String employeeId, Integer serviceId, Integer optionId) {
@@ -61,7 +61,7 @@ public class EmployeeServiceAssignmentService {
     @Transactional
     public EmployeeService assign(String employeeId, Integer serviceId) {
         if (employeeCanProvideService(employeeId, serviceId)) {
-            throw new BusinessException("Employee already assigned to service");
+            throw new BusinessException("Bu personel bu hizmete zaten atanmış.");
         }
 
         EmployeeService employeeService = EmployeeService.builder()

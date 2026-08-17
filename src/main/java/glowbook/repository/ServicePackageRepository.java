@@ -13,4 +13,7 @@ public interface ServicePackageRepository extends JpaRepository<ServicePackage, 
     List<ServicePackage> findByServiceServiceIdAndActiveTrueOrderByPackageNameAsc(Integer serviceId);
 
     Optional<ServicePackage> findByPackageIdAndActiveTrue(Integer packageId);
+
+    /** Unfiltered by active — a data-cleanup merge must find every row, not just active ones. */
+    List<ServicePackage> findByServiceServiceId(Integer serviceId);
 }

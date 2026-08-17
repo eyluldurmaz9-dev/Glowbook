@@ -57,12 +57,12 @@ public class JwtTokenService {
     private Map<String, String> parseClaims(String token) {
         String[] parts = token.split("\\.");
         if (parts.length != 3) {
-            throw new BusinessException("Invalid token");
+            throw new BusinessException("Oturum süren dolmuş olabilir. Lütfen tekrar giriş yap.");
         }
 
         String expectedSignature = sign(parts[0] + "." + parts[1]);
         if (!constantTimeEquals(expectedSignature, parts[2])) {
-            throw new BusinessException("Invalid token signature");
+            throw new BusinessException("Oturum süren dolmuş olabilir. Lütfen tekrar giriş yap.");
         }
 
         String json = new String(Base64.getUrlDecoder().decode(parts[1]), StandardCharsets.UTF_8);
@@ -75,7 +75,7 @@ public class JwtTokenService {
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), HMAC_ALGORITHM));
             return Base64.getUrlEncoder().withoutPadding().encodeToString(mac.doFinal(value.getBytes(StandardCharsets.UTF_8)));
         } catch (Exception exception) {
-            throw new BusinessException("Token could not be signed");
+            throw new BusinessException("Oturum oluşturulamadı. Lütfen daha sonra tekrar dene.");
         }
     }
 

@@ -19,20 +19,20 @@ public final class AppointmentDtos {
     public record AppointmentRequest(
             Integer customerId,
             Integer customerPackageId,
-            @NotBlank String employeeId,
-            @NotNull Integer serviceId,
-            @NotNull Integer optionId,
+            @NotBlank(message = "Personel seçilmelidir.") String employeeId,
+            @NotNull(message = "Hizmet seçilmelidir.") Integer serviceId,
+            @NotNull(message = "Alt hizmet seçilmelidir.") Integer optionId,
             String customerName,
             String customerSurname,
-            @Pattern(regexp = "^\\+?[0-9][0-9 ()-]{7,19}$", message = "must be a valid phone number") String phone,
-            @NotNull LocalDate appointmentDate,
-            @NotNull LocalTime appointmentTime
+            @Pattern(regexp = "^\\+?[0-9][0-9 ()-]{7,19}$", message = "Geçerli bir telefon numarası girilmelidir.") String phone,
+            @NotNull(message = "Randevu tarihi seçilmelidir.") LocalDate appointmentDate,
+            @NotNull(message = "Randevu saati seçilmelidir.") LocalTime appointmentTime
     ) {
     }
 
     public record AppointmentTimeUpdateRequest(
-            @NotNull LocalDate appointmentDate,
-            @NotNull LocalTime appointmentTime
+            @NotNull(message = "Randevu tarihi seçilmelidir.") LocalDate appointmentDate,
+            @NotNull(message = "Randevu saati seçilmelidir.") LocalTime appointmentTime
     ) {
     }
 

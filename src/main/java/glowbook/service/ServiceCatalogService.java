@@ -24,12 +24,12 @@ public class ServiceCatalogService {
 
     public glowbook.entity.Service getById(Integer serviceId) {
         return serviceRepository.findById(serviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Service not found: " + serviceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Hizmet bulunamadı."));
     }
 
     public glowbook.entity.Service getActiveById(Integer serviceId) {
         return serviceRepository.findByServiceIdAndActiveTrue(serviceId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active service not found: " + serviceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Aktif hizmet bulunamadı."));
     }
 
     @Transactional

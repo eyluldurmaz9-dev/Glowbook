@@ -28,13 +28,13 @@ public class HolidayService {
 
     public Holiday getById(Integer holidayId) {
         return holidayRepository.findById(holidayId)
-                .orElseThrow(() -> new ResourceNotFoundException("Holiday not found: " + holidayId));
+                .orElseThrow(() -> new ResourceNotFoundException("Tatil günü bulunamadı."));
     }
 
     @Transactional
     public Holiday create(Holiday holiday) {
         if (isHoliday(holiday.getHolidayDate())) {
-            throw new BusinessException("Holiday already exists on date: " + holiday.getHolidayDate());
+            throw new BusinessException("Bu tarih için tatil zaten tanımlı.");
         }
         return holidayRepository.save(holiday);
     }

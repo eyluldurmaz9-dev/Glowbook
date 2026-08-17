@@ -14,10 +14,10 @@ public final class CustomerDtos {
     }
 
     public record CustomerRequest(
-            @NotBlank String firstName,
-            @NotBlank String lastName,
-            @NotBlank String phone,
-            @NotBlank String password,
+            @NotBlank(message = "Ad boş olamaz.") String firstName,
+            @NotBlank(message = "Soyad boş olamaz.") String lastName,
+            @NotBlank(message = "Telefon numarası boş olamaz.") String phone,
+            @NotBlank(message = "Şifre boş olamaz.") String password,
             String email,
             Boolean active
     ) {
@@ -61,10 +61,10 @@ public final class CustomerDtos {
     }
 
     public record PackageBookingRequest(
-            @NotBlank String employeeId,
+            @NotBlank(message = "Personel seçilmelidir.") String employeeId,
             Integer optionId,
-            @NotNull LocalDate appointmentDate,
-            @NotNull LocalTime appointmentTime
+            @NotNull(message = "Randevu tarihi seçilmelidir.") LocalDate appointmentDate,
+            @NotNull(message = "Randevu saati seçilmelidir.") LocalTime appointmentTime
     ) {
     }
 

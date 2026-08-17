@@ -12,7 +12,7 @@ public final class CatalogDtos {
     }
 
     public record ServiceRequest(
-            @NotBlank String serviceName,
+            @NotBlank(message = "Hizmet adı boş olamaz.") String serviceName,
             String description,
             String serviceImage,
             Boolean active
@@ -29,8 +29,8 @@ public final class CatalogDtos {
     }
 
     public record ServiceOptionRequest(
-            @NotBlank String optionName,
-            @NotNull @Positive Double price,
+            @NotBlank(message = "Alt hizmet adı boş olamaz.") String optionName,
+            @NotNull(message = "Fiyat girilmelidir.") @Positive(message = "Fiyat sıfırdan büyük olmalıdır.") Double price,
             Boolean active
     ) {
     }
@@ -45,11 +45,11 @@ public final class CatalogDtos {
     }
 
     public record ServicePackageRequest(
-            @NotBlank String packageName,
+            @NotBlank(message = "Paket adı boş olamaz.") String packageName,
             String description,
-            @NotNull @Positive Integer totalSession,
-            @NotNull @Positive Double price,
-            @Positive Integer validityDays,
+            @NotNull(message = "Seans sayısı girilmelidir.") @Positive(message = "Seans sayısı sıfırdan büyük olmalıdır.") Integer totalSession,
+            @NotNull(message = "Fiyat girilmelidir.") @Positive(message = "Fiyat sıfırdan büyük olmalıdır.") Double price,
+            @Positive(message = "Geçerlilik süresi sıfırdan büyük olmalıdır.") Integer validityDays,
             String packageImage,
             Boolean active,
             /** IDs of the {@code ServiceOption}s this package may be booked for. Every id

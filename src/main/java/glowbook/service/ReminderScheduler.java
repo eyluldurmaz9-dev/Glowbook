@@ -36,7 +36,7 @@ public class ReminderScheduler {
     }
 
     private void sendReminder(Appointment appointment) {
-        String message = "GlowBook randevu hatirlatma: "
+        String message = "GlowBook randevu hatırlatma: "
                 + appointment.getAppointmentDate()
                 + " "
                 + appointment.getAppointmentTime()
@@ -48,7 +48,7 @@ public class ReminderScheduler {
                 appointment.getCustomer(),
                 appointment,
                 NotificationType.APPOINTMENT_REMINDER,
-                "Randevu hatirlatma",
+                "Randevu hatırlatma",
                 message,
                 appointment.getPhone()
         );

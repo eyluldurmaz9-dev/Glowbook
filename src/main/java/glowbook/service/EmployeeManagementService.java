@@ -29,18 +29,18 @@ public class EmployeeManagementService {
 
     public Employee getById(String employeeId) {
         return employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found: " + employeeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Personel bulunamadı."));
     }
 
     public Employee getActiveById(String employeeId) {
         return employeeRepository.findByEmployeeIdAndActiveTrue(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active employee not found: " + employeeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Aktif personel bulunamadı."));
     }
 
     @Transactional
     public Employee getActiveByIdForBooking(String employeeId) {
         return employeeRepository.findLockedByEmployeeIdAndActiveTrue(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active employee not found: " + employeeId));
+                .orElseThrow(() -> new ResourceNotFoundException("Aktif personel bulunamadı."));
     }
 
     @Transactional

@@ -13,7 +13,7 @@ public final class ScheduleDtos {
     }
 
     public record WorkingHourRequest(
-            @NotNull DayOfWeek dayOfWeek,
+            @NotNull(message = "Gün seçilmelidir.") DayOfWeek dayOfWeek,
             LocalTime startTime,
             LocalTime endTime,
             Boolean closed
@@ -30,8 +30,8 @@ public final class ScheduleDtos {
     }
 
     public record HolidayRequest(
-            @NotNull LocalDate holidayDate,
-            @NotBlank String holidayName,
+            @NotNull(message = "Tatil tarihi seçilmelidir.") LocalDate holidayDate,
+            @NotBlank(message = "Tatil adı boş olamaz.") String holidayName,
             String description
     ) {
     }

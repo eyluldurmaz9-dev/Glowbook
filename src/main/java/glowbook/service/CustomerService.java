@@ -25,18 +25,18 @@ public class CustomerService {
 
     public Customer getById(Integer customerId) {
         return customerRepository.findById(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
+                .orElseThrow(() -> new ResourceNotFoundException("Müşteri bulunamadı."));
     }
 
     @Transactional
     public Customer getByIdForPackagePurchase(Integer customerId) {
         return customerRepository.findLockedByCustomerId(customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found: " + customerId));
+                .orElseThrow(() -> new ResourceNotFoundException("Müşteri bulunamadı."));
     }
 
     public Customer getByPhone(String phone) {
         return customerRepository.findByPhone(phone)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer not found with phone: " + phone));
+                .orElseThrow(() -> new ResourceNotFoundException("Bu telefon numarasıyla müşteri bulunamadı."));
     }
 
     @Transactional
@@ -75,7 +75,7 @@ public class CustomerService {
         customerRepository.findByPhone(phone)
                 .filter(customer -> !customer.getCustomerId().equals(currentCustomerId))
                 .ifPresent(customer -> {
-                    throw new BusinessException("Phone already exists: " + phone);
+                    throw new BusinessException("Bu telefon numarasıyla zaten bir hesap var.");
                 });
     }
 
@@ -87,7 +87,7 @@ public class CustomerService {
         customerRepository.findByEmail(email)
                 .filter(customer -> !customer.getCustomerId().equals(currentCustomerId))
                 .ifPresent(customer -> {
-                    throw new BusinessException("Email already exists: " + email);
+                    throw new BusinessException("Bu e-posta adresiyle zaten bir hesap var.");
                 });
     }
 

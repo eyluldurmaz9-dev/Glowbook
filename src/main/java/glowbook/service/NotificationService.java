@@ -39,7 +39,7 @@ public class NotificationService {
 
     public Notification getById(Integer notificationId) {
         return notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new ResourceNotFoundException("Notification not found: " + notificationId));
+                .orElseThrow(() -> new ResourceNotFoundException("Bildirim bulunamadı."));
     }
 
     public boolean appointmentNotificationExists(Integer appointmentId, NotificationType type) {

@@ -45,4 +45,9 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
     List<Appointment> findByCustomerPackageCustomerPackageId(Integer customerPackageId);
 
     List<Appointment> findByCustomerPackageCustomerPackageIdIn(Collection<Integer> customerPackageIds);
+
+    /** Data-cleanup merge finders: re-point every appointment off a duplicate catalog row before it is deleted. */
+    List<Appointment> findByServiceServiceId(Integer serviceId);
+
+    List<Appointment> findByServiceOptionOptionId(Integer optionId);
 }

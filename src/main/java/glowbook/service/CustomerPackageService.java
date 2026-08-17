@@ -34,12 +34,12 @@ public class CustomerPackageService {
 
     public CustomerPackage getById(Integer customerPackageId) {
         return customerPackageRepository.findById(customerPackageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Customer package not found: " + customerPackageId));
+                .orElseThrow(() -> new ResourceNotFoundException("Paket bulunamadı."));
     }
 
     public CustomerPackage getActiveByCustomer(Integer customerPackageId, Integer customerId) {
         return customerPackageRepository.findByCustomerPackageIdAndCustomerCustomerIdAndActiveTrue(customerPackageId, customerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Active customer package not found: " + customerPackageId));
+                .orElseThrow(() -> new ResourceNotFoundException("Aktif paket bulunamadı."));
     }
 
     public PackageSessionAccounting accountingOf(CustomerPackage customerPackage) {
