@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 
 public final class CustomerDtos {
 
@@ -51,7 +52,11 @@ public final class CustomerDtos {
             Double purchasePrice,
             LocalDate purchaseDate,
             LocalDate validUntil,
-            Boolean active
+            Boolean active,
+            /** Same authoritative coverage as {@code CatalogDtos.ServicePackageResponse} —
+             * exactly one entry means booking this owned package must never ask again
+             * which sub-service to use. */
+            List<CatalogDtos.ServiceOptionResponse> coveredOptions
     ) {
     }
 

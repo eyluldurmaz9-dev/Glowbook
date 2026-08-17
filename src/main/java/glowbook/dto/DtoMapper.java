@@ -69,8 +69,15 @@ public final class DtoMapper {
                 servicePackage.getPrice(),
                 servicePackage.getValidityDays(),
                 servicePackage.getPackageImage(),
-                servicePackage.getActive()
+                servicePackage.getActive(),
+                toCoveredOptionResponses(servicePackage)
         );
+    }
+
+    private static List<CatalogDtos.ServiceOptionResponse> toCoveredOptionResponses(ServicePackage servicePackage) {
+        return servicePackage.getCoveredOptions().stream()
+                .map(DtoMapper::toServiceOptionResponse)
+                .toList();
     }
 
     public static CustomerDtos.CustomerPackageResponse toCustomerPackageResponse(
@@ -91,7 +98,8 @@ public final class DtoMapper {
                 customerPackage.getPurchasePrice(),
                 customerPackage.getPurchaseDate(),
                 customerPackage.getValidUntil(),
-                customerPackage.getActive()
+                customerPackage.getActive(),
+                toCoveredOptionResponses(customerPackage.getServicePackage())
         );
     }
 

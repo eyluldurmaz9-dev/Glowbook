@@ -91,7 +91,8 @@ public class AppointmentService {
         validateAvailability(employee.getEmployeeId(), request);
         Customer customer = resolveCustomer(request);
         request.setPhone(phoneNumberService.normalize(request.getPhone()));
-        CustomerPackage customerPackage = resolveAndUseCustomerPackage(request, customer, service.getServiceId());
+        CustomerPackage customerPackage =
+                resolveAndUseCustomerPackage(request, customer, service.getServiceId(), option.getOptionId());
 
         request.setEmployee(employee);
         request.setService(service);
@@ -248,7 +249,8 @@ public class AppointmentService {
         return value == null || value.isBlank();
     }
 
-    private CustomerPackage resolveAndUseCustomerPackage(Appointment request, Customer customer, Integer serviceId) {
+    private CustomerPackage resolveAndUseCustomerPackage(
+            Appointment request, Customer customer, Integer serviceId, Integer optionId) {
         if (request.getCustomerPackage() == null || request.getCustomerPackage().getCustomerPackageId() == null) {
             return null;
         }
@@ -260,7 +262,8 @@ public class AppointmentService {
         return customerPackageService.reserveSession(
                 request.getCustomerPackage().getCustomerPackageId(),
                 customer.getCustomerId(),
-                serviceId
+                serviceId,
+                optionId
         );
     }
 

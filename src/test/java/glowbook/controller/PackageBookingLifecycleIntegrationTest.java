@@ -7,7 +7,6 @@ import glowbook.repository.CustomerPackageRepository;
 import glowbook.repository.CustomerRepository;
 import glowbook.repository.EmployeeServiceRepository;
 import glowbook.repository.NotificationRepository;
-import glowbook.repository.ServiceOptionRepository;
 import glowbook.repository.ServicePackageRepository;
 import glowbook.security.JwtTokenService;
 import glowbook.security.UserRole;
@@ -60,7 +59,6 @@ class PackageBookingLifecycleIntegrationTest {
     @Autowired AppointmentRepository appointmentRepository;
     @Autowired NotificationRepository notificationRepository;
     @Autowired ServicePackageRepository servicePackageRepository;
-    @Autowired ServiceOptionRepository serviceOptionRepository;
     @Autowired EmployeeServiceRepository employeeServiceRepository;
     @Autowired JwtTokenService jwtTokenService;
 
@@ -85,8 +83,9 @@ class PackageBookingLifecycleIntegrationTest {
                 .filter(item -> item.getTotalSession() != null && item.getTotalSession() == 10)
                 .findFirst().orElseThrow();
         Integer serviceId = tenSessionPackage.getService().getServiceId();
-        optionId = serviceOptionRepository.findByServiceServiceIdAndActiveTrueOrderByOptionNameAsc(serviceId)
-                .getFirst().getOptionId();
+        // Must be one of the package's own covered options, not just any option under its
+        // service — the whole point of package/service coverage is that those can differ.
+        optionId = tenSessionPackage.getCoveredOptions().iterator().next().getOptionId();
 
         bookedEmployeeId = employeeServiceRepository.findAll().stream()
                 .filter(item -> item.getService().getServiceId().equals(serviceId))

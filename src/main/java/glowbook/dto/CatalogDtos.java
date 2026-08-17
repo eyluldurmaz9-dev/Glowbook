@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import java.util.List;
+
 public final class CatalogDtos {
 
     private CatalogDtos() {
@@ -49,7 +51,11 @@ public final class CatalogDtos {
             @NotNull @Positive Double price,
             @Positive Integer validityDays,
             String packageImage,
-            Boolean active
+            Boolean active,
+            /** IDs of the {@code ServiceOption}s this package may be booked for. Every id
+             * must belong to the package's own service. Required to be non-empty — a
+             * package with no covered option could never be booked at all. */
+            List<Integer> coveredOptionIds
     ) {
     }
 
@@ -63,7 +69,11 @@ public final class CatalogDtos {
             Double price,
             Integer validityDays,
             String packageImage,
-            Boolean active
+            Boolean active,
+            /** Authoritative: the only sub-services this package may actually be booked
+             * for. Exactly one entry means the booking flow must never ask again which
+             * sub-service to use. */
+            List<ServiceOptionResponse> coveredOptions
     ) {
     }
 }

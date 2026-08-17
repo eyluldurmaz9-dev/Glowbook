@@ -163,8 +163,9 @@ class WhatsAppAppointmentNotificationIntegrationTest {
                 .filter(item -> item.getTotalSession() != null && item.getTotalSession() == 10)
                 .findFirst().orElseThrow();
         Integer packageServiceId = tenSession.getService().getServiceId();
-        Integer packageOptionId = serviceOptionRepository
-                .findByServiceServiceIdAndActiveTrueOrderByOptionNameAsc(packageServiceId).getFirst().getOptionId();
+        // Must be one of the package's own covered options, not just any option under its
+        // service — the whole point of package/service coverage is that those can differ.
+        Integer packageOptionId = tenSession.getCoveredOptions().iterator().next().getOptionId();
         String packageEmployeeId = employeeServiceRepository.findAll().stream()
                 .filter(item -> item.getService().getServiceId().equals(packageServiceId))
                 .filter(item -> Boolean.TRUE.equals(item.getEmployee().getActive()))
@@ -262,8 +263,7 @@ class WhatsAppAppointmentNotificationIntegrationTest {
                 .filter(item -> item.getTotalSession() != null && item.getTotalSession() == 10)
                 .findFirst().orElseThrow();
         Integer packageServiceId = tenSession.getService().getServiceId();
-        Integer packageOptionId = serviceOptionRepository
-                .findByServiceServiceIdAndActiveTrueOrderByOptionNameAsc(packageServiceId).getFirst().getOptionId();
+        Integer packageOptionId = tenSession.getCoveredOptions().iterator().next().getOptionId();
         String packageEmployeeId = employeeServiceRepository.findAll().stream()
                 .filter(item -> item.getService().getServiceId().equals(packageServiceId))
                 .filter(item -> Boolean.TRUE.equals(item.getEmployee().getActive()))

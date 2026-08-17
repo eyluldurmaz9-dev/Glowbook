@@ -52,7 +52,7 @@ public class CustomerPackageService {
         ServicePackage servicePackage = servicePackageService.getActiveById(packageId);
 
         if (customerPackageRepository.existsByCustomerCustomerIdAndServicePackagePackageIdAndActiveTrue(customerId, packageId)) {
-            throw new ConflictException("Customer already owns an active copy of this package");
+            throw new ConflictException("Bu paketin aktif bir kopyasına zaten sahipsin.");
         }
 
         LocalDate today = LocalDate.now(businessClock);
@@ -83,7 +83,11 @@ public class CustomerPackageService {
     }
 
     /**
-     * Validates that the package may back one more appointment for the given service.
+     * Validates that the package may back one more appointment for the given service
+     * <b>and specific sub-service</b> — {@link glowbook.entity.ServicePackage#getCoveredOptions()}
+     * is the sole authority here (see docs/PACKAGE_SERVICE_COVERAGE.md); a service-level
+     * match alone is not enough, since most services have sibling sub-services a given
+     * package was never sold to cover.
      *
      * <p>Deliberately does <b>not</b> decrement anything: the session is consumed by the
      * existence of the appointment row itself. {@link #synchronize(CustomerPackage)} writes
@@ -91,11 +95,17 @@ public class CustomerPackageService {
      * double subtraction and double restoration structurally impossible.</p>
      */
     @Transactional
-    public CustomerPackage reserveSession(Integer customerPackageId, Integer customerId, Integer serviceId) {
+    public CustomerPackage reserveSession(Integer customerPackageId, Integer customerId, Integer serviceId, Integer optionId) {
         CustomerPackage customerPackage = getActiveByCustomer(customerPackageId, customerId);
 
         if (!customerPackage.getServicePackage().getService().getServiceId().equals(serviceId)) {
             throw new BusinessException("Seçilen paket bu hizmet için geçerli değil.");
+        }
+
+        boolean optionCovered = customerPackage.getServicePackage().getCoveredOptions().stream()
+                .anyMatch(option -> option.getOptionId().equals(optionId));
+        if (!optionCovered) {
+            throw new BusinessException("Bu hizmet seçtiğin pakete dahil değil.");
         }
 
         if (customerPackage.getValidUntil() != null

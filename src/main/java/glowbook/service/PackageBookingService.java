@@ -18,11 +18,14 @@ import java.util.List;
 /**
  * Buys a package and books its first appointment as one atomic operation.
  *
- * <p>The service the appointment is for is <b>derived from the package</b>, never taken
- * from the caller: a package always belongs to exactly one service, so asking the
- * customer to pick the service again would be redundant. Only the covered sub-service
- * (option) may still be required, and only when the service exposes more than one and
- * the customer has not picked one yet.</p>
+ * <p>The service <b>and sub-service</b> the appointment is for are <b>derived from the
+ * package</b>, never taken from the caller: {@link ServicePackage#getCoveredOptions()} is
+ * the sole authority on what a package may be booked for (see
+ * docs/PACKAGE_SERVICE_COVERAGE.md) — never the package's display name or its broad {@link
+ * ServicePackage#getService()} category, which usually has several sibling sub-services a
+ * given package does not cover. Asking the customer to pick again would be redundant when
+ * a package covers exactly one sub-service; only a genuinely multi-option package still
+ * asks, and only among the options it actually covers.</p>
  *
  * <p>Everything runs inside a single transaction: if slot validation or appointment
  * creation fails, the freshly created customer package is rolled back with it, so a
@@ -34,7 +37,6 @@ public class PackageBookingService {
 
     private final CustomerPackageService customerPackageService;
     private final ServicePackageService servicePackageService;
-    private final ServiceOptionService serviceOptionService;
     private final CustomerService customerService;
     private final AppointmentService appointmentService;
     private final PackageSessionAccountingService packageSessionAccountingService;
@@ -60,7 +62,7 @@ public class PackageBookingService {
     public PackageBookingOutcome purchaseAndBookFirstAppointment(PackageBookingCommand command) {
         ServicePackage servicePackage = servicePackageService.getActiveById(command.packageId());
         Integer serviceId = servicePackage.getService().getServiceId();
-        ServiceOption option = resolveCoveredOption(serviceId, command.optionId());
+        ServiceOption option = resolveCoveredOption(servicePackage, command.optionId());
         Customer customer = customerService.getByIdForPackagePurchase(command.customerId());
 
         CustomerPackage customerPackage = customerPackageService.purchase(command.customerId(), command.packageId());
@@ -88,18 +90,28 @@ public class PackageBookingService {
     }
 
     /**
-     * The package already fixes the service. If it covers a single sub-service we pick it
-     * silently; only a genuinely ambiguous choice is pushed back to the customer.
+     * The package already fixes the service <b>and</b> which sub-service(s) it covers
+     * (see {@link ServicePackage#getCoveredOptions()}). If it covers a single sub-service
+     * we pick it silently; a genuinely multi-option package still requires a choice, but
+     * only among its own covered options — never the wider service catalog. A mismatched
+     * option (one that belongs to the same service but not to this specific package) is
+     * rejected the same as one from an unrelated service.
      */
-    private ServiceOption resolveCoveredOption(Integer serviceId, Integer requestedOptionId) {
-        if (requestedOptionId != null) {
-            return serviceOptionService.getActiveByService(serviceId, requestedOptionId);
-        }
-
-        List<ServiceOption> covered = serviceOptionService.getActiveOptionsByService(serviceId);
+    private ServiceOption resolveCoveredOption(ServicePackage servicePackage, Integer requestedOptionId) {
+        List<ServiceOption> covered = servicePackage.getCoveredOptions().stream()
+                .filter(option -> Boolean.TRUE.equals(option.getActive()))
+                .toList();
         if (covered.isEmpty()) {
             throw new BusinessException("Bu paket için uygun bir hizmet seçeneği bulunamadı.");
         }
+
+        if (requestedOptionId != null) {
+            return covered.stream()
+                    .filter(option -> option.getOptionId().equals(requestedOptionId))
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException("Bu hizmet seçtiğin pakete dahil değil."));
+        }
+
         if (covered.size() > 1) {
             throw new BusinessException("Bu paket birden fazla seçenek kapsıyor. Lütfen birini seç.");
         }

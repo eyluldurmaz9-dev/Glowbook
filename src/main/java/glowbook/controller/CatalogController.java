@@ -146,7 +146,8 @@ public class CatalogController {
             @Valid @RequestBody CatalogDtos.ServicePackageRequest request
     ) {
         ServicePackage servicePackage = toServicePackage(request);
-        return ApiResponse.success("Service package created", DtoMapper.toServicePackageResponse(servicePackageService.create(serviceId, servicePackage)));
+        return ApiResponse.success("Service package created", DtoMapper.toServicePackageResponse(
+                servicePackageService.create(serviceId, servicePackage, request.coveredOptionIds())));
     }
 
     @PutMapping("/admin/packages/{packageId}")
@@ -155,7 +156,8 @@ public class CatalogController {
             @PathVariable Integer packageId,
             @Valid @RequestBody CatalogDtos.ServicePackageRequest request
     ) {
-        return ApiResponse.success("Service package updated", DtoMapper.toServicePackageResponse(servicePackageService.update(packageId, toServicePackage(request))));
+        return ApiResponse.success("Service package updated", DtoMapper.toServicePackageResponse(
+                servicePackageService.update(packageId, toServicePackage(request), request.coveredOptionIds())));
     }
 
     private ServicePackage toServicePackage(CatalogDtos.ServicePackageRequest request) {
