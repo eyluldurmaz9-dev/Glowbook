@@ -130,6 +130,63 @@ class EmployeeAppointmentVisibilityIntegrationTest {
                 .andExpect(jsonPath("$.data[?(@.appointmentId == " + appointmentId + ")]").exists());
     }
 
+    /**
+     * Literal reproduction of the reported scenario: a customer books Defne Yılmaz
+     * (GLW001, the seeded skin-care employee) for a specific date/time, then Defne
+     * Yılmaz's own employee login queries her weekly schedule for that week and must
+     * see it — using her real seeded competency/service data, not a synthetic employee.
+     */
+    @Test
+    void customerBooksNamedEmployeeAndThatEmployeeSeesItInHerOwnWeeklySchedule() throws Exception {
+        var defneAssignment = employeeServiceRepository.findAll().stream()
+                .filter(item -> "GLW001".equals(item.getEmployee().getEmployeeId()))
+                .findFirst().orElseThrow();
+        Integer serviceId = defneAssignment.getService().getServiceId();
+        Integer optionId = serviceOptionRepository
+                .findByServiceServiceIdAndActiveTrueOrderByOptionNameAsc(serviceId)
+                .getFirst().getOptionId();
+
+        LocalDate appointmentDate = LocalDate.of(2026, 8, 18);
+        clock.setBusinessTime(LocalDateTime.of(2026, 8, 17, 9, 0));
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("employeeId", "GLW001");
+        payload.put("serviceId", serviceId);
+        payload.put("optionId", optionId);
+        payload.put("customerName", "Test");
+        payload.put("customerSurname", "Musteri");
+        payload.put("phone", "05559998877");
+        payload.put("appointmentDate", appointmentDate.toString());
+        payload.put("appointmentTime", "12:00");
+
+        String created = mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.employeeId").value("GLW001"))
+                .andReturn().getResponse().getContentAsString();
+        int appointmentId = objectMapper.readTree(created).path("data").path("appointmentId").asInt();
+
+        // Monday-start week containing 2026-08-18 (a Tuesday): 2026-08-17..2026-08-23.
+        mockMvc.perform(get("/api/appointments/employee/GLW001")
+                        .param("startDate", "2026-08-17")
+                        .param("endDate", "2026-08-23")
+                        .header("Authorization", "Bearer " + employeeToken("GLW001")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[?(@.appointmentId == " + appointmentId + ")]").exists())
+                .andExpect(jsonPath("$.data[?(@.appointmentId == " + appointmentId
+                        + ")].appointmentDate").value("2026-08-18"))
+                .andExpect(jsonPath("$.data[?(@.appointmentId == " + appointmentId
+                        + ")].appointmentTime").value("12:00:00"));
+
+        // A different employee cannot see it, and cannot query Defne's schedule either.
+        mockMvc.perform(get("/api/appointments/employee/GLW001")
+                        .param("startDate", "2026-08-17")
+                        .param("endDate", "2026-08-23")
+                        .header("Authorization", "Bearer " + employeeToken("GLW002")))
+                .andExpect(status().isForbidden());
+    }
+
     private Map<String, Object> guestPayload() {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("employeeId", "DEMOEMP");
