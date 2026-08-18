@@ -147,6 +147,24 @@ public class AppointmentController {
         return ApiResponse.success("Appointment time updated", DtoMapper.toAppointmentResponse(appointmentService.updateTime(appointmentId, appointment)));
     }
 
+    /**
+     * Customer self-service reschedule (date/time, optionally employee). Service/option
+     * are fixed by the existing appointment and never change here. Unlike {@code /time},
+     * this is open to the appointment's own customer, not just staff.
+     */
+    @PatchMapping("/{appointmentId}/reschedule")
+    @PreAuthorize("isAuthenticated()")
+    public ApiResponse<AppointmentDtos.AppointmentResponse> reschedule(
+            @PathVariable Integer appointmentId,
+            @Valid @RequestBody AppointmentDtos.AppointmentRescheduleRequest request,
+            Authentication authentication
+    ) {
+        assertCanAccessAppointment(appointmentService.getById(appointmentId), authentication);
+        Appointment appointment = appointmentService.reschedule(
+                appointmentId, request.employeeId(), request.appointmentDate(), request.appointmentTime());
+        return ApiResponse.success("Appointment rescheduled", DtoMapper.toAppointmentResponse(appointment));
+    }
+
     private Appointment toAppointment(AppointmentDtos.AppointmentRequest request) {
         return Appointment.builder()
                 .customer(request.customerId() == null ? null : Customer.builder().customerId(request.customerId()).build())

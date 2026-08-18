@@ -36,6 +36,14 @@ public final class AppointmentDtos {
     ) {
     }
 
+    /** Customer-facing reschedule. A blank employeeId keeps the appointment's current employee. */
+    public record AppointmentRescheduleRequest(
+            String employeeId,
+            @NotNull(message = "Randevu tarihi seçilmelidir.") LocalDate appointmentDate,
+            @NotNull(message = "Randevu saati seçilmelidir.") LocalTime appointmentTime
+    ) {
+    }
+
     public record CancelAppointmentRequest(
             String cancellationReason
     ) {

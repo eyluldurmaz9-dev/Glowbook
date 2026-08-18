@@ -18,6 +18,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Intege
             Collection<AppointmentStatus> statuses
     );
 
+    /** Same slot-conflict check as above, excluding the appointment being rescheduled itself. */
+    boolean existsByEmployeeEmployeeIdAndAppointmentDateAndAppointmentTimeAndStatusInAndAppointmentIdNot(
+            String employeeId,
+            LocalDate appointmentDate,
+            LocalTime appointmentTime,
+            Collection<AppointmentStatus> statuses,
+            Integer appointmentId
+    );
+
     List<Appointment> findByEmployeeEmployeeIdAndAppointmentDateBetweenAndStatusInOrderByAppointmentDateAscAppointmentTimeAsc(
             String employeeId,
             LocalDate startDate,

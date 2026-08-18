@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -190,6 +191,54 @@ class AppointmentControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.customerId").value(customer.getCustomerId()))
                 .andExpect(jsonPath("$.data.customerName").value("Registered"));
+    }
+
+    @Test
+    void registeredCustomerCanCancelOwnAppointmentAndAnotherCustomerCannot() throws Exception {
+        Customer owner = customerRepository.save(Customer.builder()
+                .firstName("Cancel").lastName("Owner").phone("05559990001")
+                .email("cancel-owner@glowbook.test")
+                .password(passwordEncoder.encode("test-password")).active(true).build());
+        Customer intruder = customerRepository.save(Customer.builder()
+                .firstName("Cancel").lastName("Intruder").phone("05559990002")
+                .email("cancel-intruder@glowbook.test")
+                .password(passwordEncoder.encode("test-password")).active(true).build());
+
+        Map<String, Object> payload = guestPayload();
+        payload.remove("customerName");
+        payload.remove("customerSurname");
+        payload.remove("phone");
+        payload.put("customerId", owner.getCustomerId());
+        String ownerToken = jwtTokenService.generateToken(owner.getCustomerId().toString(), UserRole.CUSTOMER);
+        String intruderToken = jwtTokenService.generateToken(intruder.getCustomerId().toString(), UserRole.CUSTOMER);
+
+        String response = mockMvc.perform(post("/api/appointments")
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        int appointmentId = (Integer) ((Map<?, ?>) objectMapper.readValue(response, Map.class).get("data")).get("appointmentId");
+
+        mockMvc.perform(patch("/api/appointments/{id}/cancel", appointmentId)
+                        .header("Authorization", "Bearer " + intruderToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+
+        mockMvc.perform(patch("/api/appointments/{id}/cancel", appointmentId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("cancellationReason", "Plan degisti"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"));
+
+        mockMvc.perform(patch("/api/appointments/{id}/cancel", appointmentId)
+                        .header("Authorization", "Bearer " + ownerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("CANCELLED"));
     }
 
     private Map<String, Object> guestPayload() {

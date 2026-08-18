@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Set;
 
@@ -171,11 +172,48 @@ public class AppointmentService {
 
         validateAvailability(
                 appointment.getEmployee().getEmployeeId(),
-                availabilityRequest
+                availabilityRequest,
+                appointmentId
         );
 
         appointment.setAppointmentDate(request.getAppointmentDate());
         appointment.setAppointmentTime(request.getAppointmentTime());
+
+        Appointment savedAppointment = appointmentRepository.save(appointment);
+        publishSms(savedAppointment, NotificationType.APPOINTMENT_UPDATED, "Randevu değiştirildi",
+                appointmentMessage("Randevunuz değiştirildi", savedAppointment));
+        return savedAppointment;
+    }
+
+    /**
+     * Customer-facing reschedule: unlike {@link #updateTime}, this may also reassign the
+     * employee. Service/option are never touched — a package-backed appointment stays
+     * scoped to whatever the package already locked in. A blank/omitted employeeId keeps
+     * the appointment's current employee.
+     */
+    @Transactional
+    public Appointment reschedule(Integer appointmentId, String employeeId, LocalDate date, LocalTime time) {
+        Appointment appointment = getById(appointmentId);
+        ensureNotCancelled(appointment);
+
+        Employee targetEmployee = isBlank(employeeId)
+                ? appointment.getEmployee()
+                : employeeManagementService.getActiveByIdForBooking(employeeId);
+
+        assertEmployeeQualification(
+                targetEmployee.getEmployeeId(),
+                appointment.getService().getServiceId(),
+                appointment.getServiceOption().getOptionId());
+
+        Appointment availabilityRequest = Appointment.builder()
+                .appointmentDate(date)
+                .appointmentTime(time)
+                .build();
+        validateAvailability(targetEmployee.getEmployeeId(), availabilityRequest, appointmentId);
+
+        appointment.setEmployee(targetEmployee);
+        appointment.setAppointmentDate(date);
+        appointment.setAppointmentTime(time);
 
         Appointment savedAppointment = appointmentRepository.save(appointment);
         publishSms(savedAppointment, NotificationType.APPOINTMENT_UPDATED, "Randevu değiştirildi",
@@ -190,6 +228,10 @@ public class AppointmentService {
     }
 
     private void validateAvailability(String employeeId, Appointment request) {
+        validateAvailability(employeeId, request, null);
+    }
+
+    private void validateAvailability(String employeeId, Appointment request, Integer excludeAppointmentId) {
         appointmentAlgorithmService.validateAppointmentTime(
                 request.getAppointmentDate(), request.getAppointmentTime());
         if (holidayService.isHoliday(request.getAppointmentDate())) {
@@ -204,12 +246,20 @@ public class AppointmentService {
             throw new BusinessException("Seçilen saat çalışma saatleri dışında.");
         }
 
-        boolean occupied = appointmentRepository.existsByEmployeeEmployeeIdAndAppointmentDateAndAppointmentTimeAndStatusIn(
-                employeeId,
-                request.getAppointmentDate(),
-                request.getAppointmentTime(),
-                BLOCKING_STATUSES
-        );
+        boolean occupied = excludeAppointmentId == null
+                ? appointmentRepository.existsByEmployeeEmployeeIdAndAppointmentDateAndAppointmentTimeAndStatusIn(
+                        employeeId,
+                        request.getAppointmentDate(),
+                        request.getAppointmentTime(),
+                        BLOCKING_STATUSES
+                )
+                : appointmentRepository.existsByEmployeeEmployeeIdAndAppointmentDateAndAppointmentTimeAndStatusInAndAppointmentIdNot(
+                        employeeId,
+                        request.getAppointmentDate(),
+                        request.getAppointmentTime(),
+                        BLOCKING_STATUSES,
+                        excludeAppointmentId
+                );
 
         if (occupied) {
             throw new ConflictException("Bu saat başka bir randevu tarafından dolu. Lütfen başka bir saat seç.");
