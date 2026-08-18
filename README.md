@@ -100,6 +100,8 @@ Public health endpointleri:
 
 ## Railway/Render Deployment
 
+Production backend URL: `https://glowbook-production-7b59.up.railway.app`
+
 Build command:
 
 ```bash
