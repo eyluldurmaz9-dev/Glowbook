@@ -1,6 +1,7 @@
 package glowbook.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public final class AuthDtos {
 
@@ -25,6 +26,18 @@ public final class AuthDtos {
 
     public record RefreshRequest(
             @NotBlank(message = "Oturum bilgisi eksik.") String refreshToken
+    ) {
+    }
+
+    public record ForgotPasswordRequest(
+            @NotBlank(message = "E-posta boş olamaz.") String email
+    ) {
+    }
+
+    public record ResetPasswordRequest(
+            @NotBlank(message = "Bağlantı bilgisi eksik.") String token,
+            @NotBlank(message = "Şifre boş olamaz.")
+            @Size(min = 6, message = "Şifre en az 6 karakter olmalıdır.") String newPassword
     ) {
     }
 
