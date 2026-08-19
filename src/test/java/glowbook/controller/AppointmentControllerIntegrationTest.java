@@ -25,6 +25,7 @@ import java.time.ZoneId;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -244,6 +245,39 @@ class AppointmentControllerIntegrationTest {
                         .content("{}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("CANCELLED"));
+    }
+
+    @Test
+    void completedAppointmentCanNeverBeCancelled() throws Exception {
+        String adminToken = jwtTokenService.generateToken("TESTADMIN", UserRole.ADMIN);
+
+        String response = mockMvc.perform(post("/api/appointments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(guestPayload())))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        int appointmentId = (Integer) ((Map<?, ?>) objectMapper.readValue(response, Map.class).get("data"))
+                .get("appointmentId");
+
+        mockMvc.perform(patch("/api/appointments/{id}/approve", appointmentId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("APPROVED"));
+        mockMvc.perform(patch("/api/appointments/{id}/complete", appointmentId)
+                        .header("Authorization", "Bearer " + adminToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("COMPLETED"));
+
+        // A direct API call must reject it too, not just the admin UI hiding the button.
+        mockMvc.perform(patch("/api/appointments/{id}/cancel", appointmentId)
+                        .header("Authorization", "Bearer " + adminToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("cancellationReason", "Test"))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Tamamlanmış bir randevu iptal edilemez."));
+
+        assertThat(appointmentRepository.findById(appointmentId).orElseThrow().getStatus().name())
+                .isEqualTo("COMPLETED");
     }
 
     private Map<String, Object> guestPayload() {

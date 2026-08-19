@@ -151,6 +151,9 @@ public class AppointmentService {
         if (AppointmentStatus.CANCELLED.equals(appointment.getStatus())) {
             return appointment;
         }
+        if (AppointmentStatus.COMPLETED.equals(appointment.getStatus())) {
+            throw new BusinessException("Tamamlanmış bir randevu iptal edilemez.");
+        }
 
         appointment.setStatus(AppointmentStatus.CANCELLED);
         appointment.setCancellationReason(cancellationReason);
