@@ -100,12 +100,17 @@ class AppointmentControllerIntegrationTest {
     }
 
     @Test
-    void returnsConflictForUnavailableSlot() throws Exception {
+    void rejectsSlotBeforeOpeningWithAnAccurateMessageNotAGenericConflict() throws Exception {
+        // 09:00 is before the working day starts, not a real double-booking — the specific
+        // "outside working hours" reason must win over the generic "slot taken" conflict
+        // (see AppointmentService#create, which now validates availability before slot
+        // occupancy for exactly this reason).
         Map<String, Object> payload = guestPayload();
         payload.put("appointmentTime", "09:00");
         mockMvc.perform(post("/api/appointments").contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(payload)))
-                .andExpect(status().isConflict());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Seçilen saat çalışma saatleri dışında."));
     }
 
     @Test

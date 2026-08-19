@@ -82,6 +82,12 @@ public class AppointmentService {
         ServiceOption option = serviceOptionService.getActiveByService(service.getServiceId(), request.getServiceOption().getOptionId());
 
         assertEmployeeQualification(employee.getEmployeeId(), service.getServiceId(), option.getOptionId());
+        // Specific reasons (holiday, weekly-closed day, employee on leave) must win over the
+        // generic "slot occupied" conflict: findAvailableSlots() already excludes all of
+        // those dates from its result, so validateSlot()'s "not in the available list" check
+        // would otherwise fire first and tell the customer the time is taken by someone else
+        // when the salon is simply closed that day.
+        validateAvailability(employee.getEmployeeId(), request);
         appointmentAlgorithmService.validateSlot(
                 employee.getEmployeeId(),
                 service.getServiceId(),
@@ -89,7 +95,6 @@ public class AppointmentService {
                 request.getAppointmentDate(),
                 request.getAppointmentTime()
         );
-        validateAvailability(employee.getEmployeeId(), request);
         Customer customer = resolveCustomer(request);
         request.setPhone(phoneNumberService.normalize(request.getPhone()));
         CustomerPackage customerPackage =
